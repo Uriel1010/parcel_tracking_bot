@@ -1,0 +1,95 @@
+{
+  "name": {
+    "default": "Parcel Tracking Bot",
+    "by_language": {
+      "he": "בוט מעקב חבילות"
+    }
+  },
+  "description": {
+    "default": "Track Israel Post and AliExpress-style parcels, get updates, and manage shipments in Telegram.",
+    "by_language": {
+      "he": "מעקב אחר חבילות דואר ישראל ומשלוחי AliExpress, כולל עדכונים וניהול ישירות בטלגרם."
+    }
+  },
+  "short_description": {
+    "default": "Parcel tracking in Telegram",
+    "by_language": {
+      "he": "מעקב חבילות בטלגרם"
+    }
+  },
+  "commands": [
+    {
+      "commands": [
+        { "command": "start", "description": "Open the main menu" },
+        { "command": "help", "description": "Show help and usage tips" },
+        { "command": "add", "description": "Add a new tracking number" },
+        { "command": "myparcels", "description": "Show your tracked parcels" },
+        { "command": "settings", "description": "Open settings" },
+        { "command": "language", "description": "Change language" }
+      ],
+      "scope": { "type": "default" }
+    },
+    {
+      "language_code": "en",
+      "commands": [
+        { "command": "start", "description": "Open the main menu" },
+        { "command": "help", "description": "Show help and usage tips" },
+        { "command": "add", "description": "Add a new tracking number" },
+        { "command": "myparcels", "description": "Show your tracked parcels" },
+        { "command": "settings", "description": "Open settings" },
+        { "command": "language", "description": "Change language" }
+      ],
+      "scope": { "type": "default" }
+    },
+    {
+      "language_code": "he",
+      "commands": [
+        { "command": "start", "description": "פתיחת התפריט הראשי" },
+        { "command": "help", "description": "עזרה ושימוש" },
+        { "command": "add", "description": "הוספת מספר מעקב" },
+        { "command": "myparcels", "description": "החבילות שלי" },
+        { "command": "settings", "description": "פתיחת ההגדרות" },
+        { "command": "language", "description": "שינוי שפה" }
+      ],
+      "scope": { "type": "default" }
+    },
+    {
+      "commands": [
+        { "command": "start", "description": "Open the main menu" },
+        { "command": "help", "description": "Show help and usage tips" },
+        { "command": "add", "description": "Add a new tracking number" },
+        { "command": "myparcels", "description": "Show your tracked parcels" },
+        { "command": "settings", "description": "Open settings" },
+        { "command": "language", "description": "Change language" }
+      ],
+      "scope": { "type": "all_private_chats" }
+    },
+    {
+      "language_code": "en",
+      "commands": [
+        { "command": "start", "description": "Open the main menu" },
+        { "command": "help", "description": "Show help and usage tips" },
+        { "command": "add", "description": "Add a new tracking number" },
+        { "command": "myparcels", "description": "Show your tracked parcels" },
+        { "command": "settings", "description": "Open settings" },
+        { "command": "language", "description": "Change language" }
+      ],
+      "scope": { "type": "all_private_chats" }
+    },
+    {
+      "language_code": "he",
+      "commands": [
+        { "command": "start", "description": "פתיחת התפריט הראשי" },
+        { "command": "help", "description": "עזרה ושימוש" },
+        { "command": "add", "description": "הוספת מספר מעקב" },
+        { "command": "myparcels", "description": "החבילות שלי" },
+        { "command": "settings", "description": "פתיחת ההגדרות" },
+        { "command": "language", "description": "שינוי שפה" }
+      ],
+      "scope": { "type": "all_private_chats" }
+    }
+  ],
+  "menu_button": {
+    "type": "commands"
+  }
+}

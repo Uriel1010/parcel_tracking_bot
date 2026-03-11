@@ -1,0 +1,24 @@
+services:
+  bot:
+    build: .
+    container_name: parcel_tracking_bot
+    restart: unless-stopped
+    network_mode: bridge
+    env_file:
+      - .env
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      ADMIN_CHAT_ID: ${ADMIN_CHAT_ID}
+      DATABASE_PATH: ${DATABASE_PATH:-/app/data/bot.db}
+      BOT_METADATA_FILE_PATH: ${BOT_METADATA_FILE_PATH:-/app/config/bot_metadata.json}
+      REFRESH_INTERVAL_MINUTES: ${REFRESH_INTERVAL_MINUTES:-45}
+      STALE_CHECK_INTERVAL_HOURS: ${STALE_CHECK_INTERVAL_HOURS:-24}
+      STALE_DAYS: ${STALE_DAYS:-14}
+      STALE_REMINDER_COOLDOWN_DAYS: ${STALE_REMINDER_COOLDOWN_DAYS:-7}
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-20}
+      HTTP_RETRY_COUNT: ${HTTP_RETRY_COUNT:-2}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PAGE_SIZE: ${PAGE_SIZE:-5}
+    volumes:
+      - ./data:/app/data
+      - ./bot_metadata.json:/app/config/bot_metadata.json:ro
