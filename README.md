@@ -3,6 +3,7 @@
 Lightweight production-style Telegram bot for tracking parcels with a focus on:
 
 - Israel Post local delivery tracking
+- Exelot parcel tracking
 - Cainiao / AliExpress-style parcels
 - Multi-user tracking with SQLite persistence
 - Hebrew/English UI with per-user language switching
@@ -37,16 +38,17 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 
 1. The bot normalizes the tracking number and stores it per Telegram user.
 2. It queries Cainiao first.
-3. It then tries Israel Post for local delivery enrichment or direct Israel Post numbers.
-4. Events are normalized into one internal schema:
+3. It queries Exelot for Exelot-style tracking numbers such as `XLT...`.
+4. It then tries Israel Post for local delivery enrichment or direct Israel Post numbers.
+5. Events are normalized into one internal schema:
    - `timestamp`
    - `status_code`
    - `status_text`
    - `location`
    - `source`
    - `raw_payload`
-5. The merged event stream is deduplicated and sorted chronologically.
-6. The newest normalized event becomes the current derived status.
+6. The merged event stream is deduplicated and sorted chronologically.
+7. The newest normalized event becomes the current derived status.
 
 ## Stale reminders
 

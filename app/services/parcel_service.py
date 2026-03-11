@@ -18,6 +18,7 @@ from app.services.parser_utils import (
     snapshot_fingerprint,
 )
 from app.trackers.cainiao import CainiaoTracker
+from app.trackers.exelot import ExelotTracker
 from app.trackers.israel_post import IsraelPostTracker
 from app.trackers.merge import merge_snapshots
 from app.utils.time import days_since, format_datetime, format_datetime_from_iso, parse_iso, to_iso, utcnow
@@ -25,6 +26,7 @@ from app.utils.time import days_since, format_datetime, format_datetime_from_iso
 
 LOGGER = logging.getLogger(__name__)
 UNIVERSAL_POSTAL_PATTERN = re.compile(r"^[A-Z]{2}\d{8,10}[A-Z]{1,2}$")
+EXELOT_PATTERN = re.compile(r"^XLT\d{6,20}$")
 
 
 class ParcelService:
@@ -33,6 +35,7 @@ class ParcelService:
         self.settings = settings
         self.client = httpx.AsyncClient(timeout=settings.request_timeout_seconds, follow_redirects=True)
         self.cainiao = CainiaoTracker(self.client)
+        self.exelot = ExelotTracker(self.client)
         self.israel_post = IsraelPostTracker(self.client)
 
     async def close(self) -> None:
@@ -140,6 +143,8 @@ class ParcelService:
 
     async def fetch_tracking_snapshot(self, tracking_number: str) -> TrackingSnapshot:
         snapshots = [await self.cainiao.track(tracking_number)]
+        if EXELOT_PATTERN.match(tracking_number):
+            snapshots.append(await self.exelot.track(tracking_number))
         should_try_israel_post = (
             tracking_number.endswith("IL")
             or snapshots[0].events
