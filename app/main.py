@@ -7,6 +7,7 @@ from contextlib import suppress
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 
+from app import __version__
 from app.bot.handlers_admin import router as admin_router
 from app.bot.handlers_parcels import router as parcels_router
 from app.bot.handlers_start import router as start_router
@@ -22,7 +23,7 @@ from app.utils.logging import configure_logging
 async def main() -> None:
     settings = Settings.from_env()
     configure_logging(settings.log_level)
-    logging.getLogger(__name__).info("starting_bot")
+    logging.getLogger(__name__).info("starting_bot version=%s", __version__)
 
     db = Database(settings.database_path)
     await db.initialize()

@@ -18,3 +18,31 @@ def test_merge_snapshots_deduplicates_and_prefers_latest_event() -> None:
     )
     assert len(merged.events) == 2
     assert merged.current_status == "delivered"
+
+
+def test_merge_snapshots_drops_untimestamped_events_when_dated_events_exist() -> None:
+    timed_event = TrackingEvent(
+        timestamp=datetime(2026, 3, 9, tzinfo=UTC),
+        status_code="in_transit",
+        status_text="Accepted",
+        location="IL",
+        source="israel_post",
+    )
+    untimed_event = TrackingEvent(
+        timestamp=None,
+        status_code="in_transit",
+        status_text="Forwarded for processing",
+        location="Modiin",
+        source="cainiao",
+    )
+
+    merged = merge_snapshots(
+        "RS1303375696Y",
+        [
+            TrackingSnapshot(tracking_number="RS1303375696Y", current_status="in_transit", current_source="cainiao", events=[untimed_event]),
+            TrackingSnapshot(tracking_number="RS1303375696Y", current_status="in_transit", current_source="israel_post", events=[timed_event]),
+        ],
+    )
+
+    assert len(merged.events) == 1
+    assert merged.events[0].source == "israel_post"

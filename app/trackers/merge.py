@@ -20,6 +20,10 @@ def merge_snapshots(tracking_number: str, snapshots: list[TrackingSnapshot]) -> 
             seen.add(fingerprint)
             merged.append(event)
 
+    # Prefer dated events when at least one source provides real timestamps.
+    if any(event.timestamp is not None for event in merged):
+        merged = [event for event in merged if event.timestamp is not None]
+
     merged.sort(key=lambda event: (event.timestamp is None, event.timestamp))
     current_event = merged[-1] if merged else None
 
