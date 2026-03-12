@@ -12,6 +12,13 @@ from app.trackers.base import BaseTracker
 
 
 LOGGER = logging.getLogger(__name__)
+IGNORED_STATUS_TEXTS = {
+    "",
+    ".",
+    "אין מידע",
+    "no information",
+    "information unavailable",
+}
 
 
 class IsraelPostTracker(BaseTracker):
@@ -34,7 +41,7 @@ class IsraelPostTracker(BaseTracker):
         events: list[TrackingEvent] = []
         errors: list[str] = []
 
-        for lang in ("eng", "heb"):
+        for lang in ("heb", "eng"):
             try:
                 response = await self.client.get(
                     f"{self.API_BASE_URL}{self.TRACKING_ENDPOINT.format(tracking_number=tracking_number, lang=lang)}",
@@ -43,6 +50,7 @@ class IsraelPostTracker(BaseTracker):
                 response.raise_for_status()
                 events = self._parse_api_json(response.text)
                 if events:
+                    errors = []
                     break
             except Exception as exc:  # noqa: BLE001
                 LOGGER.warning("Israel Post API request failed: %s", exc)
@@ -60,6 +68,7 @@ class IsraelPostTracker(BaseTracker):
                 response.raise_for_status()
                 events = self._parse_content(response.text)
                 if events:
+                    errors = []
                     break
             except Exception as exc:  # noqa: BLE001
                 LOGGER.warning("Israel Post request failed: %s", exc)
@@ -149,12 +158,18 @@ class IsraelPostTracker(BaseTracker):
         events: list[TrackingEvent] = []
         for row in rows:
             status_text = str(row.get("status") or row.get("description") or row.get("text") or "").strip()
+            category_text = str(row.get("category") or "").strip()
             if not status_text:
                 continue
-            category_text = str(row.get("category") or "").strip()
+            normalized_status = status_text.casefold()
+            normalized_category = category_text.casefold()
+            if normalized_status in IGNORED_STATUS_TEXTS and normalized_category in IGNORED_STATUS_TEXTS:
+                continue
             combined_status_text = " | ".join(part for part in [category_text, status_text] if part)
             timestamp = parse_datetime(str(row.get("date") or row.get("eventDate") or row.get("timestamp") or ""))
             location = str(row.get("location") or row.get("place") or "").strip()
+            if combined_status_text.casefold() in IGNORED_STATUS_TEXTS:
+                continue
             events.append(
                 TrackingEvent(
                     timestamp=timestamp,

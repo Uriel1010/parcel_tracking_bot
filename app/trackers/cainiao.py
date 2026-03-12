@@ -36,6 +36,7 @@ class CainiaoTracker(BaseTracker):
                 response.raise_for_status()
                 events = self._parse_content(response.text)
                 if events:
+                    errors = []
                     break
             except Exception as exc:  # noqa: BLE001
                 LOGGER.warning("Cainiao request failed: %s", exc)

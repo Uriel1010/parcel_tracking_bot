@@ -35,6 +35,8 @@ class ExelotTracker(BaseTracker):
             )
             response.raise_for_status()
             events = self._parse_payload(response.text)
+            if events:
+                errors = []
         except Exception as exc:  # noqa: BLE001
             LOGGER.warning("Exelot request failed: %s", exc)
             errors.append(f"Exelot temporary error: {exc}")

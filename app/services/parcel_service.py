@@ -142,17 +142,24 @@ class ParcelService:
         return sum(1 for result in results if result)
 
     async def fetch_tracking_snapshot(self, tracking_number: str) -> TrackingSnapshot:
-        snapshots = [await self.cainiao.track(tracking_number)]
+        cainiao_snapshot = await self.cainiao.track(tracking_number)
+        snapshots = [cainiao_snapshot]
         if EXELOT_PATTERN.match(tracking_number):
             snapshots.append(await self.exelot.track(tracking_number))
+        israel_post_snapshot: TrackingSnapshot | None = None
         should_try_israel_post = (
             tracking_number.endswith("IL")
-            or snapshots[0].events
+            or cainiao_snapshot.events
             or tracking_number.startswith(("LP", "SY", "UT", "CNG", "EE", "RR"))
             or bool(UNIVERSAL_POSTAL_PATTERN.match(tracking_number))
         )
         if should_try_israel_post:
-            snapshots.append(await self.israel_post.track(tracking_number))
+            israel_post_snapshot = await self.israel_post.track(tracking_number)
+            if israel_post_snapshot.events and (
+                tracking_number.endswith("IL") or bool(UNIVERSAL_POSTAL_PATTERN.match(tracking_number))
+            ):
+                return merge_snapshots(tracking_number, [israel_post_snapshot])
+            snapshots.append(israel_post_snapshot)
         return merge_snapshots(tracking_number, snapshots)
 
     async def persist_snapshot(self, parcel_id: int, snapshot: TrackingSnapshot) -> None:
@@ -213,7 +220,7 @@ class ParcelService:
             f"{t(locale, 'parcel.details.source')}: {parcel['current_source'] or status_label(locale, 'unknown')}"
         )
 
-    async def build_parcel_details_text(self, parcel: dict[str, Any], locale: str) -> str:
+    async def build_parcel_details_text(self, parcel: dict[str, Any], locale: str, include_errors: bool = True) -> str:
         events = await self.db.list_parcel_events(parcel["id"], limit=5)
         notification_state = await self.db.get_notification_state(parcel["id"])
         last_event_at = parse_iso(parcel["last_event_at"])
@@ -233,7 +240,7 @@ class ParcelService:
         ]
         event_text = "\n".join(event_lines) if event_lines else t(locale, "parcel.details.events_none")
         error_text = ""
-        if notification_state and notification_state.get("last_error_message"):
+        if include_errors and notification_state and notification_state.get("last_error_message"):
             error_text = f"\n\n{t(locale, 'parcel.details.issue', message=notification_state['last_error_message'])}"
         return (
             f"<b>{parcel['friendly_name'] or parcel['tracking_number']}</b>\n"
@@ -271,9 +278,16 @@ class ParcelService:
         parcel = await self.db.get_parcel_by_id(parcel_id)
         if parcel is None:
             raise ValueError("Parcel not found")
-        changed = bool(parcel["last_status_fingerprint"] and parcel["last_status_fingerprint"] != previous_fingerprint)
+        state = await self.db.get_notification_state(parcel_id)
+        current_fingerprint = parcel["last_status_fingerprint"]
+        last_notified_fingerprint = state["last_notified_fingerprint"] if state else None
+        changed = bool(
+            current_fingerprint
+            and current_fingerprint != previous_fingerprint
+            and current_fingerprint != last_notified_fingerprint
+        )
         return changed, parcel
 
     async def create_status_change_message(self, parcel: dict[str, Any], locale: str) -> str:
-        details = await self.build_parcel_details_text(parcel, locale)
+        details = await self.build_parcel_details_text(parcel, locale, include_errors=False)
         return f"{t(locale, 'parcel.update_detected')}\n\n{details}"

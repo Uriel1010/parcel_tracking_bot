@@ -228,13 +228,30 @@ class Database:
 
     async def replace_events(self, parcel_id: int, events: list[dict[str, Any]]) -> None:
         async with aiosqlite.connect(self.path) as db:
+            fingerprints = [event["event_fingerprint"] for event in events]
+            if fingerprints:
+                placeholders = ",".join("?" for _ in fingerprints)
+                await db.execute(
+                    f"DELETE FROM parcel_events WHERE parcel_id = ? AND event_fingerprint NOT IN ({placeholders})",
+                    (parcel_id, *fingerprints),
+                )
+            else:
+                await db.execute("DELETE FROM parcel_events WHERE parcel_id = ?", (parcel_id,))
+
             for event in events:
                 await db.execute(
                     """
-                    INSERT OR IGNORE INTO parcel_events (
+                    INSERT INTO parcel_events (
                         parcel_id, event_fingerprint, event_timestamp, status_code,
                         status_text, location, source, raw_payload, created_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(parcel_id, event_fingerprint) DO UPDATE SET
+                        event_timestamp = excluded.event_timestamp,
+                        status_code = excluded.status_code,
+                        status_text = excluded.status_text,
+                        location = excluded.location,
+                        source = excluded.source,
+                        raw_payload = excluded.raw_payload
                     """,
                     (
                         parcel_id,
