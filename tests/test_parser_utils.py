@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from app.models import TrackingEvent
-from app.services.parser_utils import clean_tracking_number, event_fingerprint, normalize_status, snapshot_fingerprint
+from app.services.parser_utils import clean_tracking_number, event_fingerprint, event_status_fingerprint, normalize_status, snapshot_fingerprint
 from app.utils.time import format_datetime
 
 
@@ -48,6 +48,45 @@ def test_snapshot_fingerprint_changes_with_latest_event() -> None:
         source="israel_post",
     )
     assert snapshot_fingerprint([first], "in_transit") != snapshot_fingerprint([first, second], "delivered")
+
+
+def test_event_status_fingerprint_ignores_localized_text_variants() -> None:
+    timestamp = datetime(2026, 3, 11, 2, 0, tzinfo=UTC)
+    hebrew = TrackingEvent(
+        timestamp=timestamp,
+        status_code="in_transit",
+        status_text="בתהליך מיון | קליטה במודיעין",
+        location="מרכז המיון במודיעין, מודיעין",
+        source="israel_post",
+    )
+    english = TrackingEvent(
+        timestamp=timestamp,
+        status_code="in_transit",
+        status_text="In sorting process | Received in Modiin",
+        location="Modiin sorting center, Modiin",
+        source="israel_post",
+    )
+    assert event_fingerprint(hebrew) != event_fingerprint(english)
+    assert event_status_fingerprint(hebrew) == event_status_fingerprint(english)
+
+
+def test_snapshot_fingerprint_ignores_localized_israel_post_flapping() -> None:
+    timestamp = datetime(2026, 3, 11, 2, 0, tzinfo=UTC)
+    hebrew = TrackingEvent(
+        timestamp=timestamp,
+        status_code="in_transit",
+        status_text="אין מידע | הפריט נשלח",
+        location="TEL-AVIV",
+        source="israel_post",
+    )
+    english = TrackingEvent(
+        timestamp=timestamp,
+        status_code="in_transit",
+        status_text="No information | Item sent",
+        location="TEL-AVIV",
+        source="israel_post",
+    )
+    assert snapshot_fingerprint([hebrew], "in_transit") == snapshot_fingerprint([english], "in_transit")
 
 
 def test_format_datetime_uses_jerusalem_time() -> None:
