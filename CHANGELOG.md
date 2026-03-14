@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-03-14
+
+### Changed
+- Status-change fingerprints now ignore Israel Post localization flapping, preventing duplicate alerts when the same scan alternates between Hebrew and English or degraded placeholder text.
+
+### Fixed
+- Israel Post event parsing now strips placeholder status fragments such as `.` and normalizes noisy location spacing before persisting event text.
+
 ## [0.1.0] - 2026-03-12
 
 ### Added

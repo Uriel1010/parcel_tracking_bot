@@ -21,6 +21,11 @@ IGNORED_STATUS_TEXTS = {
 }
 
 
+def _clean_status_part(value: str) -> str:
+    cleaned = value.strip().strip("-").strip()
+    return "" if cleaned.casefold() in IGNORED_STATUS_TEXTS else cleaned
+
+
 class IsraelPostTracker(BaseTracker):
     source_name = "israel_post"
     API_BASE_URL = "https://apimftprd.israelpost.co.il"
@@ -157,17 +162,18 @@ class IsraelPostTracker(BaseTracker):
     def _events_from_rows(self, rows: list[dict]) -> list[TrackingEvent]:
         events: list[TrackingEvent] = []
         for row in rows:
-            status_text = str(row.get("status") or row.get("description") or row.get("text") or "").strip()
-            category_text = str(row.get("category") or "").strip()
+            status_text = _clean_status_part(str(row.get("status") or row.get("description") or row.get("text") or ""))
+            category_text = _clean_status_part(str(row.get("category") or ""))
             if not status_text:
-                continue
+                if not category_text:
+                    continue
             normalized_status = status_text.casefold()
             normalized_category = category_text.casefold()
             if normalized_status in IGNORED_STATUS_TEXTS and normalized_category in IGNORED_STATUS_TEXTS:
                 continue
             combined_status_text = " | ".join(part for part in [category_text, status_text] if part)
             timestamp = parse_datetime(str(row.get("date") or row.get("eventDate") or row.get("timestamp") or ""))
-            location = str(row.get("location") or row.get("place") or "").strip()
+            location = re.sub(r"\s+", " ", str(row.get("location") or row.get("place") or "").strip(" -,"))
             if combined_status_text.casefold() in IGNORED_STATUS_TEXTS:
                 continue
             events.append(

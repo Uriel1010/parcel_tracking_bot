@@ -95,7 +95,19 @@ def event_fingerprint(event: TrackingEvent) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def event_status_fingerprint(event: TrackingEvent) -> str:
+    payload = "|".join(
+        [
+            event.timestamp.isoformat() if event.timestamp else "",
+            event.status_code,
+            event.source,
+        ]
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def snapshot_fingerprint(events: list[TrackingEvent], current_status: str) -> str:
-    latest = event_fingerprint(events[-1]) if events else ""
-    payload = f"{current_status}|{latest}|{len(events)}"
+    latest = event_status_fingerprint(events[-1]) if events else ""
+    semantic_count = len({event_status_fingerprint(event) for event in events})
+    payload = f"{current_status}|{latest}|{semantic_count}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
