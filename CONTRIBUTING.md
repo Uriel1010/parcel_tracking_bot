@@ -37,4 +37,4 @@ docker compose config
 
 ## Changelog
 
-- Add notable user-facing or operational changes to [`CHANGELOG.md`](/home/uriel/Projects/parcel_tracking_bot/CHANGELOG.md).
+- Add notable user-facing or operational changes to [`CHANGELOG.md`](CHANGELOG.md).

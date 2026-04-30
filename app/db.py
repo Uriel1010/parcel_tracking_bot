@@ -36,6 +36,7 @@ class Database:
                     user_id INTEGER NOT NULL,
                     tracking_number TEXT NOT NULL,
                     friendly_name TEXT,
+                    hfd_phone_number TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     current_status TEXT NOT NULL DEFAULT 'unknown',
@@ -89,6 +90,10 @@ class Database:
             columns = {str(row[1]) for row in await cursor.fetchall()}
             if "language_code" not in columns:
                 await db.execute("ALTER TABLE users ADD COLUMN language_code TEXT NOT NULL DEFAULT 'en'")
+            cursor = await db.execute("PRAGMA table_info(parcels)")
+            parcel_columns = {str(row[1]) for row in await cursor.fetchall()}
+            if "hfd_phone_number" not in parcel_columns:
+                await db.execute("ALTER TABLE parcels ADD COLUMN hfd_phone_number TEXT")
             await db.commit()
 
     async def execute(self, sql: str, params: Sequence[Any] = ()) -> None:
@@ -143,15 +148,22 @@ class Database:
     async def set_user_language(self, telegram_user_id: int, language_code: str) -> None:
         await self.execute("UPDATE users SET language_code = ? WHERE telegram_user_id = ?", (language_code, telegram_user_id))
 
-    async def create_parcel(self, user_id: int, tracking_number: str, now: datetime, friendly_name: str | None = None) -> int:
+    async def create_parcel(
+        self,
+        user_id: int,
+        tracking_number: str,
+        now: datetime,
+        friendly_name: str | None = None,
+        hfd_phone_number: str | None = None,
+    ) -> int:
         async with aiosqlite.connect(self.path) as db:
             cursor = await db.execute(
                 """
                 INSERT INTO parcels (
-                    user_id, tracking_number, friendly_name, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?)
+                    user_id, tracking_number, friendly_name, hfd_phone_number, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (user_id, tracking_number, friendly_name, to_iso(now), to_iso(now)),
+                (user_id, tracking_number, friendly_name, hfd_phone_number, to_iso(now), to_iso(now)),
             )
             await db.commit()
             parcel_id = int(cursor.lastrowid)
@@ -321,6 +333,9 @@ class Database:
 
     async def set_friendly_name(self, parcel_id: int, friendly_name: str | None) -> None:
         await self.execute("UPDATE parcels SET friendly_name = ? WHERE id = ?", (friendly_name, parcel_id))
+
+    async def set_hfd_phone_number(self, parcel_id: int, hfd_phone_number: str | None) -> None:
+        await self.execute("UPDATE parcels SET hfd_phone_number = ? WHERE id = ?", (hfd_phone_number, parcel_id))
 
     async def update_notification_state(
         self,
