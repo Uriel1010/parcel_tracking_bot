@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Parcel Tracking Telegram Bot logo" width="160">
+</p>
+
 # Parcel Tracking Telegram Bot
 
 Lightweight production-style Telegram bot for tracking parcels with a focus on:
