@@ -7,6 +7,7 @@ from aiogram import Bot
 from app.bot.keyboards import delivered_keyboard, stale_keyboard
 from app.db import Database
 from app.i18n import t
+from app.services.parser_utils import is_hfd_tracking_number
 from app.utils.time import parse_iso, utcnow
 
 
@@ -28,7 +29,7 @@ class NotificationService:
             telegram_user_id,
             t(locale, "parcel.delivered_notice", tracking_number=parcel["tracking_number"]),
             parse_mode="HTML",
-            reply_markup=delivered_keyboard(parcel["id"], locale),
+            reply_markup=delivered_keyboard(parcel["id"], locale, include_hfd_phone_edit=is_hfd_tracking_number(parcel["tracking_number"])),
         )
         await self.db.update_notification_state(parcel["id"], delivered_notice_sent=True)
         return True

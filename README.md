@@ -3,6 +3,7 @@
 Lightweight production-style Telegram bot for tracking parcels with a focus on:
 
 - Israel Post local delivery tracking
+- HFD local courier tracking for `HD...` shipments with linked phone number lookup
 - Exelot parcel tracking
 - Cainiao / AliExpress-style parcels
 - Multi-user tracking with SQLite persistence
@@ -16,7 +17,7 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 
 ## Telegram metadata sync
 
-- The bot loads Telegram-managed public metadata from [`bot_metadata.json`](/home/uriel/Projects/parcel_tracking_bot/bot_metadata.json) on startup.
+- The bot loads Telegram-managed public metadata from [`bot_metadata.json`](bot_metadata.json) on startup.
 - On every container restart it compares the configured values with Telegram and only updates what changed.
 - The current implementation synchronizes:
   - bot name
@@ -40,15 +41,16 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 2. It queries Cainiao first.
 3. It queries Exelot for Exelot-style tracking numbers such as `XLT...`.
 4. It then tries Israel Post for local delivery enrichment or direct Israel Post numbers.
-5. Events are normalized into one internal schema:
+5. HFD shipments that start with `HD` ask for the linked phone number and use HFD's public tracking flow.
+6. Events are normalized into one internal schema:
    - `timestamp`
    - `status_code`
    - `status_text`
    - `location`
    - `source`
    - `raw_payload`
-6. The merged event stream is deduplicated and sorted chronologically.
-7. The newest normalized event becomes the current derived status.
+7. The merged event stream is deduplicated and sorted chronologically.
+8. The newest normalized event becomes the current derived status.
 
 ## Stale reminders
 
@@ -100,8 +102,8 @@ The Telegram metadata config is read from `./bot_metadata.json` and mounted into
 
 Tracked example files:
 
-- [`.env.example`](/home/uriel/Projects/parcel_tracking_bot/.env.example)
-- [`docker-compose.yml.example`](/home/uriel/Projects/parcel_tracking_bot/docker-compose.yml.example)
+- [`.env.example`](.env.example)
+- [`docker-compose.yml.example`](docker-compose.yml.example)
 
 Local files you should create but not commit:
 
@@ -154,11 +156,11 @@ requirements.txt
 
 1. Copy `.env.example` to `.env`.
 2. Replace the token and admin chat ID values in `.env`.
-3. Keep `.env` out of git. It is already ignored by [`.gitignore`](/home/uriel/Projects/parcel_tracking_bot/.gitignore).
+3. Keep `.env` out of git. It is already ignored by [`.gitignore`](.gitignore).
 
 ## Updating Telegram bot metadata
 
-1. Edit [`bot_metadata.json`](/home/uriel/Projects/parcel_tracking_bot/bot_metadata.json).
+1. Edit [`bot_metadata.json`](bot_metadata.json).
 2. Restart the container:
 
 ```bash

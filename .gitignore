@@ -21,6 +21,9 @@ data/
 *.sqlite3
 *.log
 
+# Browser automation artifacts
+.playwright-mcp/
+
 # Coverage
 .coverage
 htmlcov/

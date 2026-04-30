@@ -19,7 +19,13 @@ def start_keyboard(locale: str) -> InlineKeyboardMarkup:
     )
 
 
-def parcel_actions_keyboard(parcel_id: int, reminders_muted: bool, locale: str, include_back: bool = False) -> InlineKeyboardMarkup:
+def parcel_actions_keyboard(
+    parcel_id: int,
+    reminders_muted: bool,
+    locale: str,
+    include_back: bool = False,
+    include_hfd_phone_edit: bool = False,
+) -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(text=t(locale, "btn.refresh"), callback_data=ParcelActionCallback(action="refresh", parcel_id=parcel_id).pack()),
@@ -34,6 +40,8 @@ def parcel_actions_keyboard(parcel_id: int, reminders_muted: bool, locale: str, 
             ),
         ],
     ]
+    if include_hfd_phone_edit:
+        rows.append([InlineKeyboardButton(text=t(locale, "btn.edit_hfd_phone"), callback_data=ParcelActionCallback(action="edit_hfd_phone", parcel_id=parcel_id).pack())])
     if include_back:
         rows.append([InlineKeyboardButton(text=t(locale, "btn.back_to_list"), callback_data=ParcelActionCallback(action="list", parcel_id=parcel_id).pack())])
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -74,15 +82,16 @@ def stale_keyboard(parcel_id: int, locale: str) -> InlineKeyboardMarkup:
     )
 
 
-def delivered_keyboard(parcel_id: int, locale: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text=t(locale, "btn.keep_history"), callback_data=ParcelActionCallback(action="history", parcel_id=parcel_id).pack()),
-                InlineKeyboardButton(text=t(locale, "btn.delete"), callback_data=ParcelActionCallback(action="delete", parcel_id=parcel_id).pack()),
-            ]
+def delivered_keyboard(parcel_id: int, locale: str, include_hfd_phone_edit: bool = False) -> InlineKeyboardMarkup:
+    rows = [
+        [
+            InlineKeyboardButton(text=t(locale, "btn.keep_history"), callback_data=ParcelActionCallback(action="history", parcel_id=parcel_id).pack()),
+            InlineKeyboardButton(text=t(locale, "btn.delete"), callback_data=ParcelActionCallback(action="delete", parcel_id=parcel_id).pack()),
         ]
-    )
+    ]
+    if include_hfd_phone_edit:
+        rows.append([InlineKeyboardButton(text=t(locale, "btn.edit_hfd_phone"), callback_data=ParcelActionCallback(action="edit_hfd_phone", parcel_id=parcel_id).pack())])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def admin_keyboard(locale: str) -> InlineKeyboardMarkup:

@@ -1,7 +1,17 @@
 from datetime import UTC, datetime, timedelta
 
 from app.models import TrackingEvent
-from app.services.parser_utils import clean_tracking_number, event_fingerprint, event_status_fingerprint, normalize_status, snapshot_fingerprint
+from app.services.parser_utils import (
+    clean_tracking_number,
+    event_fingerprint,
+    event_status_fingerprint,
+    is_hfd_tracking_number,
+    mask_phone_number,
+    normalize_phone_number,
+    normalize_status,
+    parse_datetime,
+    snapshot_fingerprint,
+)
 from app.utils.time import format_datetime
 
 
@@ -9,9 +19,28 @@ def test_clean_tracking_number() -> None:
     assert clean_tracking_number(" lp 123-456 il ") == "LP123456IL"
 
 
+def test_is_hfd_tracking_number() -> None:
+    assert is_hfd_tracking_number("HD001194524")
+    assert not is_hfd_tracking_number("RS1303375696Y")
+
+
+def test_normalize_phone_number() -> None:
+    assert normalize_phone_number("0545544290") == "0545544290"
+    assert normalize_phone_number("+972545544290") == "0545544290"
+    assert normalize_phone_number("123") is None
+
+
+def test_mask_phone_number() -> None:
+    assert mask_phone_number("0545544290") == "***4290"
+
+
 def test_normalize_status() -> None:
     assert normalize_status("Out for delivery") == "out_for_delivery"
     assert normalize_status("Item delivered successfully") == "delivered"
+
+
+def test_parse_datetime_supports_two_digit_year() -> None:
+    assert parse_datetime("16/04/26 09:04") == datetime(2026, 4, 16, 9, 4, tzinfo=UTC)
 
 
 def test_event_fingerprint_changes_with_payload() -> None:

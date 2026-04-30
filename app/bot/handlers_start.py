@@ -12,6 +12,7 @@ from app.bot.handlers_parcels import send_parcel_list
 from app.bot.keyboards import language_keyboard, parcel_actions_keyboard, settings_keyboard, start_keyboard
 from app.i18n import normalize_locale, t
 from app.services.parcel_service import ParcelService
+from app.services.parser_utils import is_hfd_tracking_number
 
 
 router = Router()
@@ -19,6 +20,7 @@ router = Router()
 
 class AddParcelStates(StatesGroup):
     waiting_for_tracking_number = State()
+    waiting_for_hfd_phone = State()
     waiting_for_friendly_name = State()
 
 
@@ -183,6 +185,22 @@ async def handle_tracking_input(message: Message, state: FSMContext, parcel_serv
         await message.answer(t(locale, "prompt.tracking"))
         return
     await state.update_data(raw_tracking_number=raw_tracking_number)
+    if is_hfd_tracking_number(raw_tracking_number):
+        await state.set_state(AddParcelStates.waiting_for_hfd_phone)
+        await message.answer(t(locale, "prompt.hfd_phone"))
+        return
+    await state.set_state(AddParcelStates.waiting_for_friendly_name)
+    await message.answer(t(locale, "prompt.friendly_name"))
+
+
+@router.message(AddParcelStates.waiting_for_hfd_phone)
+async def handle_hfd_phone_input(message: Message, state: FSMContext, parcel_service: ParcelService) -> None:
+    locale = await _user_locale(message, parcel_service)
+    normalized = parcel_service.normalize_hfd_phone_number(message.text or "")
+    if normalized is None:
+        await message.answer(t(locale, "prompt.invalid_hfd_phone"))
+        return
+    await state.update_data(hfd_phone_number=normalized)
     await state.set_state(AddParcelStates.waiting_for_friendly_name)
     await message.answer(t(locale, "prompt.friendly_name"))
 
@@ -201,12 +219,14 @@ async def _finish_add_parcel(message: Message, state: FSMContext, parcel_service
     locale = await _user_locale(message, parcel_service)
     data = await state.get_data()
     raw_tracking_number = data.get("raw_tracking_number", "")
+    hfd_phone_number = data.get("hfd_phone_number")
     parcel, info = await parcel_service.add_parcel_for_user(
         message.from_user.id,
         message.from_user.username,
         message.from_user.first_name,
         raw_tracking_number,
         friendly_name=friendly_name,
+        hfd_phone_number=hfd_phone_number,
         locale=locale,
     )
     await state.clear()
@@ -217,13 +237,23 @@ async def _finish_add_parcel(message: Message, state: FSMContext, parcel_service
     await message.answer(
         f"{info}\n\n{summary}",
         parse_mode="HTML",
-        reply_markup=parcel_actions_keyboard(parcel["id"], bool(parcel["reminders_muted"]), locale),
+        reply_markup=parcel_actions_keyboard(
+            parcel["id"],
+            bool(parcel["reminders_muted"]),
+            locale,
+            include_hfd_phone_edit=is_hfd_tracking_number(parcel["tracking_number"]),
+        ),
     )
 
 
 @router.message(F.text.regexp(r"^[A-Za-z0-9\- ]{8,40}$"))
-async def handle_freeform_tracking(message: Message, parcel_service: ParcelService) -> None:
+async def handle_freeform_tracking(message: Message, state: FSMContext, parcel_service: ParcelService) -> None:
     locale = await _user_locale(message, parcel_service)
+    if is_hfd_tracking_number(message.text or ""):
+        await state.update_data(raw_tracking_number=message.text or "")
+        await state.set_state(AddParcelStates.waiting_for_hfd_phone)
+        await message.answer(t(locale, "prompt.hfd_phone"))
+        return
     parcel, info = await parcel_service.add_parcel_for_user(
         message.from_user.id,
         message.from_user.username,
@@ -237,5 +267,10 @@ async def handle_freeform_tracking(message: Message, parcel_service: ParcelServi
     await message.answer(
         f"{info}\n\n{summary}",
         parse_mode="HTML",
-        reply_markup=parcel_actions_keyboard(parcel["id"], bool(parcel["reminders_muted"]), locale),
+        reply_markup=parcel_actions_keyboard(
+            parcel["id"],
+            bool(parcel["reminders_muted"]),
+            locale,
+            include_hfd_phone_edit=is_hfd_tracking_number(parcel["tracking_number"]),
+        ),
     )

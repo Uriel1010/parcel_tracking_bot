@@ -35,6 +35,7 @@ STATUS_MAP = {
     "ממתין": "arrived_country",
     "מיון": "in_transit",
 }
+HFD_PATTERN = re.compile(r"^HD\d{6,20}$")
 
 
 def clean_tracking_number(value: str) -> str:
@@ -44,6 +45,31 @@ def clean_tracking_number(value: str) -> str:
 def is_reasonable_tracking_number(value: str) -> bool:
     cleaned = clean_tracking_number(value)
     return 8 <= len(cleaned) <= 40 and any(ch.isdigit() for ch in cleaned)
+
+
+def is_hfd_tracking_number(value: str) -> bool:
+    return bool(HFD_PATTERN.match(clean_tracking_number(value)))
+
+
+def normalize_phone_number(value: str | None) -> str | None:
+    if value is None:
+        return None
+    digits = re.sub(r"\D", "", value)
+    if not digits:
+        return None
+    if digits.startswith("972") and len(digits) in {11, 12}:
+        digits = f"0{digits[3:]}"
+    if len(digits) not in {9, 10} or not digits.startswith("0"):
+        return None
+    return digits
+
+
+def mask_phone_number(value: str | None) -> str:
+    if not value:
+        return "-"
+    normalized = normalize_phone_number(value) or value
+    visible = normalized[-4:] if len(normalized) >= 4 else normalized
+    return f"***{visible}"
 
 
 def normalize_status(text: str) -> str:
@@ -62,7 +88,9 @@ def parse_datetime(value: str | None) -> datetime | None:
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M",
         "%d/%m/%Y %H:%M",
+        "%d/%m/%y %H:%M",
         "%d/%m/%Y",
+        "%d/%m/%y",
         "%Y-%m-%d",
         "%d %b %Y, %I:%M %p",
         "%d %B %Y, %I:%M %p",
