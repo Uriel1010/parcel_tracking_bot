@@ -10,7 +10,6 @@ from app.bot.callbacks import ParcelActionCallback
 from app.bot.keyboards import delivered_keyboard, parcel_actions_keyboard, parcel_list_keyboard
 from app.i18n import t
 from app.services.parcel_service import ParcelService
-from app.services.parser_utils import is_hfd_tracking_number
 
 
 router = Router()
@@ -97,14 +96,14 @@ async def handle_parcel_actions(
     if callback_data.action == "details":
         text = await parcel_service.build_parcel_details_text(parcel, locale)
         keyboard = (
-            delivered_keyboard(parcel["id"], locale, include_hfd_phone_edit=is_hfd_tracking_number(parcel["tracking_number"]))
+            delivered_keyboard(parcel["id"], locale, include_hfd_phone_edit=_include_phone_edit(parcel_service, parcel))
             if parcel["current_status"] == "delivered"
             else parcel_actions_keyboard(
                 parcel["id"],
                 bool(parcel["reminders_muted"]),
                 locale,
                 include_back=True,
-                include_hfd_phone_edit=is_hfd_tracking_number(parcel["tracking_number"]),
+                include_hfd_phone_edit=_include_phone_edit(parcel_service, parcel),
             )
         )
         await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
@@ -119,7 +118,7 @@ async def handle_parcel_actions(
                 bool(refreshed["reminders_muted"]),
                 locale,
                 include_back=True,
-                include_hfd_phone_edit=is_hfd_tracking_number(refreshed["tracking_number"]),
+                include_hfd_phone_edit=_include_phone_edit(parcel_service, refreshed),
             ),
         )
     elif callback_data.action == "delete":
@@ -136,7 +135,7 @@ async def handle_parcel_actions(
                 True,
                 locale,
                 include_back=True,
-                include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"]),
+                include_hfd_phone_edit=_include_phone_edit(parcel_service, updated),
             ),
         )
     elif callback_data.action == "unmute":
@@ -150,7 +149,7 @@ async def handle_parcel_actions(
                 False,
                 locale,
                 include_back=True,
-                include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"]),
+                include_hfd_phone_edit=_include_phone_edit(parcel_service, updated),
             ),
         )
     elif callback_data.action == "keep":
@@ -164,7 +163,7 @@ async def handle_parcel_actions(
                 bool(updated["reminders_muted"]),
                 locale,
                 include_back=True,
-                include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"]),
+                include_hfd_phone_edit=_include_phone_edit(parcel_service, updated),
             ),
         )
     elif callback_data.action == "history":
@@ -173,7 +172,7 @@ async def handle_parcel_actions(
         await callback.message.edit_text(
             await parcel_service.build_parcel_details_text(updated, locale),
             parse_mode="HTML",
-            reply_markup=delivered_keyboard(updated["id"], locale, include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"])),
+            reply_markup=delivered_keyboard(updated["id"], locale, include_hfd_phone_edit=_include_phone_edit(parcel_service, updated)),
         )
     elif callback_data.action == "list":
         await send_parcel_list(callback.message, parcel_service, callback.from_user.id, callback_data.page, parcel_service.settings.page_size, locale, edit=True)
@@ -184,7 +183,7 @@ async def handle_parcel_actions(
     elif callback_data.action == "edit_hfd_phone":
         await state.set_state(HfdPhoneStates.waiting_for_phone)
         await state.update_data(hfd_phone_parcel_id=parcel["id"])
-        await callback.message.answer(t(locale, "prompt.hfd_phone_edit"))
+        await callback.message.answer(t(locale, "prompt.hfd_phone_edit", service=parcel_service.tracking_phone_service_label(parcel["tracking_number"])))
 
 
 @router.message(Command("clearname"), RenameParcelStates.waiting_for_name)
@@ -221,7 +220,7 @@ async def _finish_rename(message: Message, state: FSMContext, parcel_service: Pa
             bool(updated["reminders_muted"]),
             locale,
             include_back=True,
-            include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"]),
+            include_hfd_phone_edit=_include_phone_edit(parcel_service, updated),
         ),
     )
 
@@ -242,11 +241,11 @@ async def handle_hfd_phone_edit(message: Message, state: FSMContext, parcel_serv
         return
     normalized = parcel_service.normalize_hfd_phone_number(message.text or "")
     if normalized is None:
-        await message.answer(t(locale, "prompt.invalid_hfd_phone"))
+        await message.answer(t(locale, "prompt.invalid_hfd_phone", service=parcel_service.tracking_phone_service_label(parcel["tracking_number"])))
         return
     updated = await parcel_service.set_hfd_phone_number(parcel["id"], normalized)
     await state.clear()
-    text = f"{t(locale, 'parcel.hfd_phone_updated')}\n\n{await parcel_service.build_parcel_details_text(updated, locale)}"
+    text = f"{t(locale, 'parcel.hfd_phone_updated', service=parcel_service.tracking_phone_service_label(updated['tracking_number']))}\n\n{await parcel_service.build_parcel_details_text(updated, locale)}"
     await message.answer(
         text,
         parse_mode="HTML",
@@ -255,6 +254,10 @@ async def handle_hfd_phone_edit(message: Message, state: FSMContext, parcel_serv
             bool(updated["reminders_muted"]),
             locale,
             include_back=True,
-            include_hfd_phone_edit=is_hfd_tracking_number(updated["tracking_number"]),
+            include_hfd_phone_edit=_include_phone_edit(parcel_service, updated),
         ),
     )
+
+
+def _include_phone_edit(parcel_service: ParcelService, parcel: dict) -> bool:
+    return parcel_service.parcel_requires_linked_phone_number(parcel["tracking_number"])

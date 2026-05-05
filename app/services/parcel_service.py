@@ -14,13 +14,17 @@ from app.models import TrackingSnapshot
 from app.services.parser_utils import (
     clean_tracking_number,
     event_fingerprint,
+    is_epost_tracking_number,
     is_hfd_tracking_number,
     is_reasonable_tracking_number,
     mask_phone_number,
     normalize_phone_number,
+    requires_linked_phone_number,
     snapshot_fingerprint,
+    tracking_phone_service_key,
 )
 from app.trackers.cainiao import CainiaoTracker
+from app.trackers.epost import EpostTracker
 from app.trackers.exelot import ExelotTracker
 from app.trackers.hfd import HfdTracker
 from app.trackers.israel_post import IsraelPostTracker
@@ -40,6 +44,7 @@ class ParcelService:
         self.client = httpx.AsyncClient(timeout=settings.request_timeout_seconds, follow_redirects=True)
         self.cainiao = CainiaoTracker(self.client)
         self.exelot = ExelotTracker(self.client)
+        self.epost = EpostTracker(self.client)
         self.hfd = HfdTracker(self.client)
         self.israel_post = IsraelPostTracker(self.client)
 
@@ -88,10 +93,10 @@ class ParcelService:
         if not is_reasonable_tracking_number(tracking_number):
             return None, t(locale, "prompt.invalid_tracking")
         normalized_hfd_phone = None
-        if is_hfd_tracking_number(tracking_number):
+        if requires_linked_phone_number(tracking_number):
             normalized_hfd_phone = normalize_phone_number(hfd_phone_number)
             if normalized_hfd_phone is None:
-                return None, t(locale, "prompt.invalid_hfd_phone")
+                return None, t(locale, "prompt.invalid_hfd_phone", service=self.tracking_phone_service_label(tracking_number))
 
         user_id = await self.ensure_user(telegram_user_id, username, first_name, locale)
         existing = await self.db.get_parcel_by_user_tracking(user_id, tracking_number)
@@ -126,6 +131,13 @@ class ParcelService:
     def normalize_hfd_phone_number(self, phone_number: str | None) -> str | None:
         return normalize_phone_number(phone_number)
 
+    def tracking_phone_service_label(self, tracking_number: str) -> str:
+        service_key = tracking_phone_service_key(tracking_number)
+        return "ePost" if service_key == "epost" else "HFD"
+
+    def parcel_requires_linked_phone_number(self, tracking_number: str) -> bool:
+        return requires_linked_phone_number(tracking_number)
+
     async def rename_parcel(self, parcel_id: int, friendly_name: str | None) -> dict[str, Any]:
         await self.db.set_friendly_name(parcel_id, self.normalize_friendly_name(friendly_name))
         parcel = await self.db.get_parcel_by_id(parcel_id)
@@ -136,7 +148,7 @@ class ParcelService:
     async def set_hfd_phone_number(self, parcel_id: int, phone_number: str | None) -> dict[str, Any]:
         normalized = self.normalize_hfd_phone_number(phone_number)
         if normalized is None:
-            raise ValueError("Invalid HFD phone number")
+            raise ValueError("Invalid linked phone number")
         await self.db.set_hfd_phone_number(parcel_id, normalized)
         try:
             return await self.refresh_parcel(parcel_id)
@@ -178,6 +190,8 @@ class ParcelService:
 
     async def fetch_tracking_snapshot_for_parcel(self, parcel: dict[str, Any]) -> TrackingSnapshot:
         tracking_number = parcel["tracking_number"]
+        if is_epost_tracking_number(tracking_number):
+            return await self.epost.track(tracking_number, parcel.get("hfd_phone_number"))
         if is_hfd_tracking_number(tracking_number):
             return await self.hfd.track(tracking_number, parcel.get("hfd_phone_number"))
         cainiao_snapshot = await self.cainiao.track(tracking_number)
@@ -281,8 +295,11 @@ class ParcelService:
         if include_errors and notification_state and notification_state.get("last_error_message"):
             error_text = f"\n\n{t(locale, 'parcel.details.issue', message=notification_state['last_error_message'])}"
         hfd_phone_line = ""
-        if is_hfd_tracking_number(parcel["tracking_number"]):
-            hfd_phone_line = f"{t(locale, 'parcel.details.hfd_phone')}: {mask_phone_number(parcel.get('hfd_phone_number'))}\n"
+        if self.parcel_requires_linked_phone_number(parcel["tracking_number"]):
+            hfd_phone_line = (
+                f"{t(locale, 'parcel.details.hfd_phone', service=self.tracking_phone_service_label(parcel['tracking_number']))}: "
+                f"{mask_phone_number(parcel.get('hfd_phone_number'))}\n"
+            )
         return (
             f"<b>{parcel['friendly_name'] or parcel['tracking_number']}</b>\n"
             f"{t(locale, 'parcel.details.tracking')}: <code>{parcel['tracking_number']}</code>\n"

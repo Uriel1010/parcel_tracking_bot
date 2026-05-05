@@ -6,15 +6,15 @@
     }
   },
   "description": {
-    "default": "Track Israel Post, HFD, Exelot, and AliExpress/Cainiao-style parcels, get updates, and manage shipments in Telegram.",
+    "default": "Track Israel Post, HFD, ePost, Exelot, and AliExpress/Cainiao-style parcels, get updates, and manage shipments in Telegram.",
     "by_language": {
-      "he": "מעקב אחר חבילות דואר ישראל, HFD, Exelot ומשלוחי AliExpress/Cainiao, כולל עדכונים וניהול ישירות בטלגרם."
+      "he": "מעקב אחר חבילות דואר ישראל, HFD, ePost, Exelot ומשלוחי AliExpress/Cainiao, כולל עדכונים וניהול ישירות בטלגרם."
     }
   },
   "short_description": {
-    "default": "Track Israel Post, HFD, Exelot and Cainiao parcels",
+    "default": "Track Israel Post, HFD, ePost, Exelot and Cainiao parcels",
     "by_language": {
-      "he": "מעקב דואר ישראל, HFD, Exelot ו-Cainiao"
+      "he": "מעקב דואר ישראל, HFD, ePost, Exelot ו-Cainiao"
     }
   },
   "commands": [
