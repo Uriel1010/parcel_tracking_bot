@@ -15,6 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 class HfdTracker(BaseTracker):
     source_name = "hfd"
+    display_name = "HFD"
     LOOKUP_URL = "https://api.hfd.co.il/rest/v3/api/ship-locate-num-and-phone"
     DETAILS_URL = "https://run.hfd.co.il/runcom.server/request.aspx"
 
@@ -25,8 +26,8 @@ class HfdTracker(BaseTracker):
                 current_status="unknown",
                 current_source=self.source_name,
                 events=[],
-                source_summaries={"hfd": {"event_count": 0}},
-                errors=["HFD requires a linked phone number for tracking."],
+                source_summaries={self.source_name: {"event_count": 0}},
+                errors=[f"{self.display_name} requires a linked phone number for tracking."],
             )
 
         errors: list[str] = []
@@ -41,9 +42,9 @@ class HfdTracker(BaseTracker):
             status, status_message, ship_rand_num = self._parse_lookup_response(lookup_response.text)
             if status != "OK" or not ship_rand_num:
                 if status_message:
-                    errors.append(f"HFD: {status_message}")
+                    errors.append(f"{self.display_name}: {status_message}")
                 else:
-                    errors.append("HFD could not find this shipment for the provided phone number.")
+                    errors.append(f"{self.display_name} could not find this shipment for the provided phone number.")
             else:
                 details_response = await self.client.get(
                     self.DETAILS_URL,
@@ -52,17 +53,17 @@ class HfdTracker(BaseTracker):
                 details_response.raise_for_status()
                 events = self._parse_tracking_page(details_response.text)
                 if not events:
-                    errors.append("HFD returned no tracking events for this shipment.")
+                    errors.append(f"{self.display_name} returned no tracking events for this shipment.")
         except Exception as exc:  # noqa: BLE001
-            LOGGER.warning("HFD tracking request failed: %s", exc)
-            errors.append(f"HFD temporary error: {exc}")
+            LOGGER.warning("%s tracking request failed: %s", self.display_name, exc)
+            errors.append(f"{self.display_name} temporary error: {exc}")
 
         return TrackingSnapshot(
             tracking_number=tracking_number,
             current_status=events[-1].status_code if events else "unknown",
             current_source=self.source_name,
             events=events,
-            source_summaries={"hfd": {"event_count": len(events)}},
+            source_summaries={self.source_name: {"event_count": len(events)}},
             errors=errors,
         )
 
@@ -70,7 +71,7 @@ class HfdTracker(BaseTracker):
         try:
             root = ET.fromstring(text)
         except ET.ParseError:
-            return "ERROR", "Invalid HFD lookup response.", ""
+            return "ERROR", f"Invalid {self.display_name} lookup response.", ""
         status = (root.findtext("status") or "").strip()
         status_message = (root.findtext("status_message") or "").strip()
         ship_rand_num = (root.findtext("ship_rand_num") or "").strip()

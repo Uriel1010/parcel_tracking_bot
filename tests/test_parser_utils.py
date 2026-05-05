@@ -5,7 +5,9 @@ from app.services.parser_utils import (
     clean_tracking_number,
     event_fingerprint,
     event_status_fingerprint,
+    is_epost_tracking_number,
     is_hfd_tracking_number,
+    requires_linked_phone_number,
     mask_phone_number,
     normalize_phone_number,
     normalize_status,
@@ -22,6 +24,17 @@ def test_clean_tracking_number() -> None:
 def test_is_hfd_tracking_number() -> None:
     assert is_hfd_tracking_number("HD001194524")
     assert not is_hfd_tracking_number("RS1303375696Y")
+
+
+def test_is_epost_tracking_number() -> None:
+    assert is_epost_tracking_number("ECSA0061337")
+    assert not is_epost_tracking_number("HD001194524")
+
+
+def test_requires_linked_phone_number() -> None:
+    assert requires_linked_phone_number("HD001194524")
+    assert requires_linked_phone_number("ECSA0061337")
+    assert not requires_linked_phone_number("RS1303375696Y")
 
 
 def test_normalize_phone_number() -> None:

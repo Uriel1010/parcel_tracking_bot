@@ -6,6 +6,15 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-05
+
+### Added
+- ePost tracking support for `ECSA...` shipments using the linked phone number through HFD's public tracking flow.
+
+### Changed
+- Phone-required parcel flows now cover both HFD and ePost shipments with service-specific user-facing labels.
+- Bot profile metadata, help text, and README now list ePost as a supported tracking service.
+
 ## [0.2.1] - 2026-04-30
 
 ### Changed

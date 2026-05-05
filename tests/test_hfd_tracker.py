@@ -1,4 +1,5 @@
 from app.trackers.hfd import HfdTracker
+from app.trackers.epost import EpostTracker
 
 
 LOOKUP_OK = """<?xml version="1.0" encoding="utf-8"?>
@@ -55,3 +56,11 @@ def test_parse_tracking_page() -> None:
     assert events[0].status_code == "in_transit"
     assert events[0].status_text == "מידע נקלט (משלוח עדיין לא הגיע) / shipment data received"
     assert events[1].status_code == "delivered"
+
+
+def test_epost_tracker_uses_epost_source() -> None:
+    tracker = EpostTracker(None)
+    events = tracker._parse_tracking_page(DETAILS_HTML)
+
+    assert tracker.source_name == "epost"
+    assert events[0].source == "epost"

@@ -36,6 +36,7 @@ STATUS_MAP = {
     "מיון": "in_transit",
 }
 HFD_PATTERN = re.compile(r"^HD\d{6,20}$")
+EPOST_PATTERN = re.compile(r"^ECSA\d{4,20}$")
 
 
 def clean_tracking_number(value: str) -> str:
@@ -49,6 +50,18 @@ def is_reasonable_tracking_number(value: str) -> bool:
 
 def is_hfd_tracking_number(value: str) -> bool:
     return bool(HFD_PATTERN.match(clean_tracking_number(value)))
+
+
+def is_epost_tracking_number(value: str) -> bool:
+    return bool(EPOST_PATTERN.match(clean_tracking_number(value)))
+
+
+def requires_linked_phone_number(value: str) -> bool:
+    return is_hfd_tracking_number(value) or is_epost_tracking_number(value)
+
+
+def tracking_phone_service_key(value: str) -> str:
+    return "epost" if is_epost_tracking_number(value) else "hfd"
 
 
 def normalize_phone_number(value: str | None) -> str | None:
