@@ -6,6 +6,21 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-10
+
+### Added
+- GAASH Worldwide tracking support for `GAIH...` shipments through GAASH's public parcel-status API.
+
+## [0.3.2] - 2026-05-08
+
+### Added
+- AliExpress Standard Shipping tracking support for `MB##########Y` numbers through a Track.global fallback when direct Cainiao/Israel Post sources do not expose events.
+
+## [0.3.1] - 2026-05-06
+
+### Added
+- Alert messages now end with a searchable `#TRACKINGNUMBER` hashtag for status updates, delivered notices, and stale reminders.
+
 ## [0.3.0] - 2026-05-05
 
 ### Added

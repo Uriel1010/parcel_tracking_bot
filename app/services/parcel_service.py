@@ -12,9 +12,12 @@ from app.db import Database
 from app.i18n import normalize_locale, status_label, t
 from app.models import TrackingSnapshot
 from app.services.parser_utils import (
+    append_tracking_hashtag,
     clean_tracking_number,
     event_fingerprint,
+    is_aliexpress_standard_tracking_number,
     is_epost_tracking_number,
+    is_gaash_tracking_number,
     is_hfd_tracking_number,
     is_reasonable_tracking_number,
     mask_phone_number,
@@ -26,9 +29,11 @@ from app.services.parser_utils import (
 from app.trackers.cainiao import CainiaoTracker
 from app.trackers.epost import EpostTracker
 from app.trackers.exelot import ExelotTracker
+from app.trackers.gaash import GaashTracker
 from app.trackers.hfd import HfdTracker
 from app.trackers.israel_post import IsraelPostTracker
 from app.trackers.merge import merge_snapshots
+from app.trackers.track_global import TrackGlobalTracker
 from app.utils.time import days_since, format_datetime, format_datetime_from_iso, parse_iso, to_iso, utcnow
 
 
@@ -45,8 +50,10 @@ class ParcelService:
         self.cainiao = CainiaoTracker(self.client)
         self.exelot = ExelotTracker(self.client)
         self.epost = EpostTracker(self.client)
+        self.gaash = GaashTracker(self.client)
         self.hfd = HfdTracker(self.client)
         self.israel_post = IsraelPostTracker(self.client)
+        self.track_global = TrackGlobalTracker(self.client)
 
     async def close(self) -> None:
         await self.client.aclose()
@@ -194,8 +201,12 @@ class ParcelService:
             return await self.epost.track(tracking_number, parcel.get("hfd_phone_number"))
         if is_hfd_tracking_number(tracking_number):
             return await self.hfd.track(tracking_number, parcel.get("hfd_phone_number"))
+        if is_gaash_tracking_number(tracking_number):
+            return await self.gaash.track(tracking_number)
         cainiao_snapshot = await self.cainiao.track(tracking_number)
         snapshots = [cainiao_snapshot]
+        if is_aliexpress_standard_tracking_number(tracking_number):
+            snapshots.append(await self.track_global.track(tracking_number))
         if EXELOT_PATTERN.match(tracking_number):
             snapshots.append(await self.exelot.track(tracking_number))
         israel_post_snapshot: TrackingSnapshot | None = None
@@ -349,4 +360,4 @@ class ParcelService:
 
     async def create_status_change_message(self, parcel: dict[str, Any], locale: str) -> str:
         details = await self.build_parcel_details_text(parcel, locale, include_errors=False)
-        return f"{t(locale, 'parcel.update_detected')}\n\n{details}"
+        return append_tracking_hashtag(f"{t(locale, 'parcel.update_detected')}\n\n{details}", parcel["tracking_number"])

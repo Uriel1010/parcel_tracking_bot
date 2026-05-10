@@ -9,8 +9,9 @@ Lightweight production-style Telegram bot for tracking parcels with a focus on:
 - Israel Post local delivery tracking
 - HFD local courier tracking for `HD...` shipments with linked phone number lookup
 - ePost tracking for `ECSA...` shipments with linked phone number lookup through HFD's public flow
+- GAASH Worldwide tracking for `GAIH...` shipments
 - Exelot parcel tracking
-- Cainiao / AliExpress-style parcels
+- Cainiao / AliExpress-style parcels, including `MB##########Y` AliExpress Standard Shipping numbers
 - Multi-user tracking with SQLite persistence
 - Hebrew/English UI with per-user language switching
 - Inline-keyboard driven UX
@@ -47,15 +48,16 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 3. It queries Exelot for Exelot-style tracking numbers such as `XLT...`.
 4. It then tries Israel Post for local delivery enrichment or direct Israel Post numbers.
 5. HFD shipments that start with `HD` and ePost shipments such as `ECSA...` ask for the linked phone number and use HFD's public tracking flow.
-6. Events are normalized into one internal schema:
+6. GAASH Worldwide shipments such as `GAIH...` use GAASH's public parcel-status flow.
+7. Events are normalized into one internal schema:
    - `timestamp`
    - `status_code`
    - `status_text`
    - `location`
    - `source`
    - `raw_payload`
-7. The merged event stream is deduplicated and sorted chronologically.
-8. The newest normalized event becomes the current derived status.
+8. The merged event stream is deduplicated and sorted chronologically.
+9. The newest normalized event becomes the current derived status.
 
 ## Stale reminders
 

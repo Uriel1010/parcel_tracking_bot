@@ -7,7 +7,7 @@ from aiogram import Bot
 from app.bot.keyboards import delivered_keyboard, stale_keyboard
 from app.db import Database
 from app.i18n import t
-from app.services.parser_utils import requires_linked_phone_number
+from app.services.parser_utils import append_tracking_hashtag, requires_linked_phone_number
 from app.utils.time import parse_iso, utcnow
 
 
@@ -27,7 +27,10 @@ class NotificationService:
             return False
         await self.bot.send_message(
             telegram_user_id,
-            t(locale, "parcel.delivered_notice", tracking_number=parcel["tracking_number"]),
+            append_tracking_hashtag(
+                t(locale, "parcel.delivered_notice", tracking_number=parcel["tracking_number"]),
+                parcel["tracking_number"],
+            ),
             parse_mode="HTML",
             reply_markup=delivered_keyboard(parcel["id"], locale, include_hfd_phone_edit=requires_linked_phone_number(parcel["tracking_number"])),
         )
@@ -45,7 +48,10 @@ class NotificationService:
                 return False
         await self.bot.send_message(
             telegram_user_id,
-            t(locale, "parcel.stale", tracking_number=parcel["tracking_number"], days=stale_days),
+            append_tracking_hashtag(
+                t(locale, "parcel.stale", tracking_number=parcel["tracking_number"], days=stale_days),
+                parcel["tracking_number"],
+            ),
             parse_mode="HTML",
             reply_markup=stale_keyboard(parcel["id"], locale),
         )

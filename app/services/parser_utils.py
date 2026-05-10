@@ -12,9 +12,12 @@ STATUS_MAP = {
     "received": "in_transit",
     "accepted": "in_transit",
     "processing": "in_transit",
+    "departure transport hub": "in_transit",
+    "departed": "in_transit",
     "forwarded": "in_transit",
     "delivery": "out_for_delivery",
     "out for delivery": "out_for_delivery",
+    "on the way": "in_transit",
     "arrived": "arrived_country",
     "destination": "arrived_country",
     "customs": "arrived_country",
@@ -37,10 +40,20 @@ STATUS_MAP = {
 }
 HFD_PATTERN = re.compile(r"^HD\d{6,20}$")
 EPOST_PATTERN = re.compile(r"^ECSA\d{4,20}$")
+ALIEXPRESS_STANDARD_PATTERN = re.compile(r"^MB\d{10}Y$")
+GAASH_PATTERN = re.compile(r"^GAIH\d{6,20}$")
 
 
 def clean_tracking_number(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "", value).upper()
+
+
+def tracking_hashtag(value: str) -> str:
+    return f"#{clean_tracking_number(value)}"
+
+
+def append_tracking_hashtag(text: str, tracking_number: str) -> str:
+    return f"{text.rstrip()}\n\n{tracking_hashtag(tracking_number)}"
 
 
 def is_reasonable_tracking_number(value: str) -> bool:
@@ -54,6 +67,14 @@ def is_hfd_tracking_number(value: str) -> bool:
 
 def is_epost_tracking_number(value: str) -> bool:
     return bool(EPOST_PATTERN.match(clean_tracking_number(value)))
+
+
+def is_aliexpress_standard_tracking_number(value: str) -> bool:
+    return bool(ALIEXPRESS_STANDARD_PATTERN.match(clean_tracking_number(value)))
+
+
+def is_gaash_tracking_number(value: str) -> bool:
+    return bool(GAASH_PATTERN.match(clean_tracking_number(value)))
 
 
 def requires_linked_phone_number(value: str) -> bool:
