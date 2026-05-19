@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-19
+
+### Fixed
+- Cainiao tracking now tries the official `/global/detail.json` endpoint used by the current frontend and surfaces captcha-blocked source errors instead of silently returning no Cainiao events.
+- Track.global fallback parsing now ignores "No information available" placeholders instead of storing them as unknown tracking events.
+
 ## [0.4.0] - 2026-05-10
 
 ### Added

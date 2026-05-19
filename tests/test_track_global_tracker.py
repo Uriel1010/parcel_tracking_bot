@@ -53,3 +53,18 @@ def test_parse_tracking_widget_skips_banners_and_sorts_events() -> None:
     assert events[1].status_text == "Departed from sorting center"
     assert events[1].location == "Songgang Subdistrict"
     assert events[2].status_text == "Arrived at departure transport hub"
+
+
+def test_parse_tracking_widget_ignores_no_information_placeholder() -> None:
+    tracker = TrackGlobalTracker(None)
+    events = tracker._parse_tracking_widget(
+        """
+        <div class="tracking-widget__list">
+          <div class="tracking-widget__list-item" role="listitem">
+            <span class="tracking-widget__list-text">No information available for this parcel</span>
+          </div>
+        </div>
+        """
+    )
+
+    assert events == []

@@ -12,6 +12,11 @@ from app.trackers.base import BaseTracker
 
 
 LOGGER = logging.getLogger(__name__)
+IGNORED_STATUS_TEXTS = {
+    "no information available for this parcel",
+    "no tracking information available",
+    "tracking information is not available",
+}
 
 
 class TrackGlobalTracker(BaseTracker):
@@ -66,7 +71,7 @@ class TrackGlobalTracker(BaseTracker):
             if status_node is None:
                 continue
             status_text = (status_node.get("data-original") or status_node.get_text(" ", strip=True)).strip()
-            if not status_text:
+            if not status_text or status_text.casefold() in IGNORED_STATUS_TEXTS:
                 continue
             location, status_text = self._split_location(status_text)
             date_text = item.select_one(".tracking-widget__date")
