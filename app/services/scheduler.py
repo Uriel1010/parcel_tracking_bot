@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -33,6 +34,10 @@ class SchedulerService:
         self.stale_check_interval_hours = stale_check_interval_hours
         self.stale_days = stale_days
         self.scheduler = AsyncIOScheduler(timezone="UTC")
+        self._job_locks = {
+            "refresh_active_parcels": asyncio.Lock(),
+            "send_stale_reminders": asyncio.Lock(),
+        }
 
     def start(self) -> None:
         self.scheduler.add_job(self.refresh_active_parcels, "interval", minutes=self.refresh_interval_minutes, id="refresh_active_parcels")
@@ -43,6 +48,10 @@ class SchedulerService:
         self.scheduler.shutdown(wait=False)
 
     async def refresh_active_parcels(self) -> None:
+        async with self._job_locks["refresh_active_parcels"]:
+            await self._refresh_active_parcels()
+
+    async def _refresh_active_parcels(self) -> None:
         try:
             parcels = await self.db.list_active_parcels()
             for parcel in parcels:
@@ -65,6 +74,10 @@ class SchedulerService:
             await self.db.set_job_status("refresh_active_parcels", "error", str(exc), utcnow())
 
     async def send_stale_reminders(self) -> None:
+        async with self._job_locks["send_stale_reminders"]:
+            await self._send_stale_reminders()
+
+    async def _send_stale_reminders(self) -> None:
         try:
             parcels = await self.parcel_service.list_due_stale_parcels()
             for parcel in parcels:

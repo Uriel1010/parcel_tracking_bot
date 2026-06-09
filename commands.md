@@ -17,7 +17,7 @@ language - Change language
 
 ## Admin Commands
 
-These commands are implemented in the bot but are intended for the admin chat only:
+These commands are registered only for admin chat `123456789`:
 
 ```text
 admin - Open the admin dashboard

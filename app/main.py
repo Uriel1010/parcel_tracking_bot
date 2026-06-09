@@ -11,6 +11,7 @@ from app import __version__
 from app.bot.handlers_admin import router as admin_router
 from app.bot.handlers_parcels import router as parcels_router
 from app.bot.handlers_start import router as start_router
+from app.bot.middleware import AccessMiddleware
 from app.config import Settings
 from app.db import Database
 from app.services.metadata_sync import initialize_bot_metadata
@@ -46,6 +47,10 @@ async def main() -> None:
     dp["settings"] = settings
     dp["db"] = db
     dp["parcel_service"] = parcel_service
+    dp["scheduler_service"] = scheduler
+    access_middleware = AccessMiddleware(db, settings)
+    dp.message.outer_middleware(access_middleware)
+    dp.callback_query.outer_middleware(access_middleware)
     dp.include_router(start_router)
     dp.include_router(parcels_router)
     dp.include_router(admin_router)

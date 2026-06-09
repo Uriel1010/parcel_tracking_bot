@@ -84,12 +84,40 @@ class Database:
                     last_status TEXT,
                     last_error TEXT
                 );
+
+                CREATE TABLE IF NOT EXISTS admin_audit_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    actor_user_id INTEGER NOT NULL,
+                    action TEXT NOT NULL,
+                    target_type TEXT,
+                    target_id TEXT,
+                    metadata TEXT,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS broadcast_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    actor_user_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    recipient_count INTEGER NOT NULL DEFAULT 0,
+                    success_count INTEGER NOT NULL DEFAULT 0,
+                    failure_count INTEGER NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT "pending",
+                    created_at TEXT NOT NULL,
+                    completed_at TEXT
+                );
                 """
             )
             cursor = await db.execute("PRAGMA table_info(users)")
             columns = {str(row[1]) for row in await cursor.fetchall()}
             if "language_code" not in columns:
                 await db.execute("ALTER TABLE users ADD COLUMN language_code TEXT NOT NULL DEFAULT 'en'")
+            if "is_blocked" not in columns:
+                await db.execute("ALTER TABLE users ADD COLUMN is_blocked INTEGER NOT NULL DEFAULT 0")
+            if "blocked_at" not in columns:
+                await db.execute("ALTER TABLE users ADD COLUMN blocked_at TEXT")
+            if "blocked_by" not in columns:
+                await db.execute("ALTER TABLE users ADD COLUMN blocked_by INTEGER")
             cursor = await db.execute("PRAGMA table_info(parcels)")
             parcel_columns = {str(row[1]) for row in await cursor.fetchall()}
             if "hfd_phone_number" not in parcel_columns:
@@ -221,7 +249,7 @@ class Database:
             SELECT p.*, u.telegram_user_id, u.language_code
             FROM parcels p
             JOIN users u ON u.id = p.user_id
-            WHERE p.archived = 0
+            WHERE p.archived = 0 AND u.is_blocked = 0
             ORDER BY COALESCE(p.last_checked_at, p.updated_at) ASC
             """
         )
@@ -444,3 +472,146 @@ class Database:
             """,
             (limit,),
         )
+
+    async def is_user_blocked(self, telegram_user_id: int) -> bool:
+        row = await self.fetchone("SELECT is_blocked FROM users WHERE telegram_user_id = ?", (telegram_user_id,))
+        return bool(row and row["is_blocked"])
+
+    async def count_users(self, search: str = "") -> int:
+        pattern = f"%{search.strip()}%"
+        row = await self.fetchone(
+            "SELECT COUNT(*) AS count FROM users WHERE ? = '' OR CAST(telegram_user_id AS TEXT) LIKE ? OR COALESCE(username, '') LIKE ?",
+            (search.strip(), pattern, pattern),
+        )
+        return int(row["count"]) if row else 0
+
+    async def list_users_page(self, limit: int, offset: int, search: str = "") -> list[dict[str, Any]]:
+        pattern = f"%{search.strip()}%"
+        return await self.fetchall(
+            """
+            SELECT u.*, COUNT(p.id) AS parcel_count
+            FROM users u LEFT JOIN parcels p ON p.user_id = u.id
+            WHERE ? = '' OR CAST(u.telegram_user_id AS TEXT) LIKE ? OR COALESCE(u.username, '') LIKE ?
+            GROUP BY u.id ORDER BY u.created_at DESC LIMIT ? OFFSET ?
+            """,
+            (search.strip(), pattern, pattern, limit, offset),
+        )
+
+    async def get_admin_user_detail(self, telegram_user_id: int) -> dict[str, Any] | None:
+        return await self.fetchone(
+            """
+            SELECT u.*, COUNT(p.id) AS parcel_count,
+                   SUM(CASE WHEN p.archived = 0 THEN 1 ELSE 0 END) AS active_parcel_count
+            FROM users u LEFT JOIN parcels p ON p.user_id = u.id
+            WHERE u.telegram_user_id = ? GROUP BY u.id
+            """,
+            (telegram_user_id,),
+        )
+
+    async def set_user_blocked(self, telegram_user_id: int, blocked: bool, actor_user_id: int, now: datetime) -> None:
+        await self.execute(
+            "UPDATE users SET is_blocked = ?, blocked_at = ?, blocked_by = ? WHERE telegram_user_id = ?",
+            (int(blocked), to_iso(now) if blocked else None, actor_user_id if blocked else None, telegram_user_id),
+        )
+
+    async def user_delete_impact(self, telegram_user_id: int) -> dict[str, int]:
+        row = await self.fetchone(
+            """
+            SELECT COUNT(DISTINCT p.id) AS parcels, COUNT(pe.id) AS events
+            FROM users u LEFT JOIN parcels p ON p.user_id = u.id
+            LEFT JOIN parcel_events pe ON pe.parcel_id = p.id
+            WHERE u.telegram_user_id = ?
+            """,
+            (telegram_user_id,),
+        )
+        return {"parcels": int(row["parcels"] or 0), "events": int(row["events"] or 0)} if row else {"parcels": 0, "events": 0}
+
+    async def delete_user_data(self, telegram_user_id: int) -> bool:
+        async with aiosqlite.connect(self.path) as db:
+            cursor = await db.execute("SELECT id FROM users WHERE telegram_user_id = ?", (telegram_user_id,))
+            row = await cursor.fetchone()
+            if not row:
+                return False
+            user_id = int(row[0])
+            await db.execute("DELETE FROM parcel_events WHERE parcel_id IN (SELECT id FROM parcels WHERE user_id = ?)", (user_id,))
+            await db.execute("DELETE FROM notification_state WHERE parcel_id IN (SELECT id FROM parcels WHERE user_id = ?)", (user_id,))
+            await db.execute("DELETE FROM parcels WHERE user_id = ?", (user_id,))
+            await db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            await db.commit()
+            return True
+
+    async def count_admin_parcels(self, search: str = "", status_filter: str = "all") -> int:
+        pattern = f"%{search.strip()}%"
+        row = await self.fetchone(
+            """
+            SELECT COUNT(*) AS count FROM parcels p
+            LEFT JOIN notification_state ns ON ns.parcel_id = p.id
+            WHERE (? = '' OR p.tracking_number LIKE ? OR COALESCE(p.friendly_name, '') LIKE ?)
+              AND (? = 'all' OR (? = 'active' AND p.archived = 0 AND p.current_status != 'delivered')
+                OR (? = 'delivered' AND p.current_status = 'delivered') OR (? = 'archived' AND p.archived = 1)
+                OR (? = 'errors' AND ns.last_error_at IS NOT NULL))
+            """,
+            (search.strip(), pattern, pattern, status_filter, status_filter, status_filter, status_filter, status_filter),
+        )
+        return int(row["count"]) if row else 0
+
+    async def list_admin_parcels(self, limit: int, offset: int, search: str = "", status_filter: str = "all") -> list[dict[str, Any]]:
+        pattern = f"%{search.strip()}%"
+        return await self.fetchall(
+            """
+            SELECT p.*, u.telegram_user_id, u.username, ns.last_error_at, ns.last_error_message
+            FROM parcels p JOIN users u ON u.id = p.user_id
+            LEFT JOIN notification_state ns ON ns.parcel_id = p.id
+            WHERE (? = '' OR p.tracking_number LIKE ? OR COALESCE(p.friendly_name, '') LIKE ?)
+              AND (? = 'all' OR (? = 'active' AND p.archived = 0 AND p.current_status != 'delivered')
+                OR (? = 'delivered' AND p.current_status = 'delivered') OR (? = 'archived' AND p.archived = 1)
+                OR (? = 'errors' AND ns.last_error_at IS NOT NULL))
+            ORDER BY COALESCE(p.last_checked_at, p.updated_at) DESC LIMIT ? OFFSET ?
+            """,
+            (search.strip(), pattern, pattern, status_filter, status_filter, status_filter, status_filter, status_filter, limit, offset),
+        )
+
+    async def get_admin_parcel(self, parcel_id: int) -> dict[str, Any] | None:
+        return await self.fetchone(
+            """
+            SELECT p.*, u.telegram_user_id, u.username, u.language_code, ns.last_error_at, ns.last_error_message
+            FROM parcels p JOIN users u ON u.id = p.user_id
+            LEFT JOIN notification_state ns ON ns.parcel_id = p.id WHERE p.id = ?
+            """,
+            (parcel_id,),
+        )
+
+    async def list_job_runs(self) -> list[dict[str, Any]]:
+        return await self.fetchall("SELECT * FROM job_runs ORDER BY job_name")
+
+    async def list_audit_log(self, limit: int = 20, offset: int = 0) -> list[dict[str, Any]]:
+        return await self.fetchall("SELECT * FROM admin_audit_log ORDER BY created_at DESC LIMIT ? OFFSET ?", (limit, offset))
+
+    async def add_audit_log(self, actor_user_id: int, action: str, now: datetime, target_type: str | None = None, target_id: str | int | None = None, metadata: str | None = None) -> None:
+        await self.execute(
+            "INSERT INTO admin_audit_log(actor_user_id, action, target_type, target_id, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (actor_user_id, action, target_type, str(target_id) if target_id is not None else None, metadata, to_iso(now)),
+        )
+
+    async def list_broadcast_recipients(self) -> list[int]:
+        rows = await self.fetchall("SELECT telegram_user_id FROM users WHERE is_blocked = 0 ORDER BY id")
+        return [int(row["telegram_user_id"]) for row in rows]
+
+    async def create_broadcast_run(self, actor_user_id: int, content: str, recipient_count: int, now: datetime) -> int:
+        async with aiosqlite.connect(self.path) as db:
+            cursor = await db.execute(
+                "INSERT INTO broadcast_runs(actor_user_id, content, recipient_count, status, created_at) VALUES (?, ?, ?, 'running', ?)",
+                (actor_user_id, content, recipient_count, to_iso(now)),
+            )
+            await db.commit()
+            return int(cursor.lastrowid)
+
+    async def finish_broadcast_run(self, run_id: int, success_count: int, failure_count: int, now: datetime) -> None:
+        await self.execute(
+            "UPDATE broadcast_runs SET success_count = ?, failure_count = ?, status = 'completed', completed_at = ? WHERE id = ?",
+            (success_count, failure_count, to_iso(now), run_id),
+        )
+
+    async def count_audit_log(self) -> int:
+        row = await self.fetchone("SELECT COUNT(*) AS count FROM admin_audit_log")
+        return int(row["count"]) if row else 0

@@ -20,85 +20,411 @@
   "commands": [
     {
       "commands": [
-        { "command": "start", "description": "Open the main menu" },
-        { "command": "help", "description": "Show help and usage tips" },
-        { "command": "version", "description": "Show the bot version" },
-        { "command": "changelog", "description": "Show recent release notes" },
-        { "command": "add", "description": "Add a new tracking number" },
-        { "command": "myparcels", "description": "Show your tracked parcels" },
-        { "command": "settings", "description": "Open settings" },
-        { "command": "language", "description": "Change language" }
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        }
       ],
-      "scope": { "type": "default" }
+      "scope": {
+        "type": "default"
+      }
     },
     {
       "language_code": "en",
       "commands": [
-        { "command": "start", "description": "Open the main menu" },
-        { "command": "help", "description": "Show help and usage tips" },
-        { "command": "version", "description": "Show the bot version" },
-        { "command": "changelog", "description": "Show recent release notes" },
-        { "command": "add", "description": "Add a new tracking number" },
-        { "command": "myparcels", "description": "Show your tracked parcels" },
-        { "command": "settings", "description": "Open settings" },
-        { "command": "language", "description": "Change language" }
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        }
       ],
-      "scope": { "type": "default" }
+      "scope": {
+        "type": "default"
+      }
     },
     {
       "language_code": "he",
       "commands": [
-        { "command": "start", "description": "פתיחת התפריט הראשי" },
-        { "command": "help", "description": "עזרה ושימוש" },
-        { "command": "version", "description": "הצגת גרסת הבוט" },
-        { "command": "changelog", "description": "הצגת שינויים אחרונים" },
-        { "command": "add", "description": "הוספת מספר מעקב" },
-        { "command": "myparcels", "description": "החבילות שלי" },
-        { "command": "settings", "description": "פתיחת ההגדרות" },
-        { "command": "language", "description": "שינוי שפה" }
+        {
+          "command": "start",
+          "description": "פתיחת התפריט הראשי"
+        },
+        {
+          "command": "help",
+          "description": "עזרה ושימוש"
+        },
+        {
+          "command": "version",
+          "description": "הצגת גרסת הבוט"
+        },
+        {
+          "command": "changelog",
+          "description": "הצגת שינויים אחרונים"
+        },
+        {
+          "command": "add",
+          "description": "הוספת מספר מעקב"
+        },
+        {
+          "command": "myparcels",
+          "description": "החבילות שלי"
+        },
+        {
+          "command": "settings",
+          "description": "פתיחת ההגדרות"
+        },
+        {
+          "command": "language",
+          "description": "שינוי שפה"
+        }
       ],
-      "scope": { "type": "default" }
+      "scope": {
+        "type": "default"
+      }
     },
     {
       "commands": [
-        { "command": "start", "description": "Open the main menu" },
-        { "command": "help", "description": "Show help and usage tips" },
-        { "command": "version", "description": "Show the bot version" },
-        { "command": "changelog", "description": "Show recent release notes" },
-        { "command": "add", "description": "Add a new tracking number" },
-        { "command": "myparcels", "description": "Show your tracked parcels" },
-        { "command": "settings", "description": "Open settings" },
-        { "command": "language", "description": "Change language" }
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        }
       ],
-      "scope": { "type": "all_private_chats" }
+      "scope": {
+        "type": "all_private_chats"
+      }
     },
     {
       "language_code": "en",
       "commands": [
-        { "command": "start", "description": "Open the main menu" },
-        { "command": "help", "description": "Show help and usage tips" },
-        { "command": "version", "description": "Show the bot version" },
-        { "command": "changelog", "description": "Show recent release notes" },
-        { "command": "add", "description": "Add a new tracking number" },
-        { "command": "myparcels", "description": "Show your tracked parcels" },
-        { "command": "settings", "description": "Open settings" },
-        { "command": "language", "description": "Change language" }
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        }
       ],
-      "scope": { "type": "all_private_chats" }
+      "scope": {
+        "type": "all_private_chats"
+      }
     },
     {
       "language_code": "he",
       "commands": [
-        { "command": "start", "description": "פתיחת התפריט הראשי" },
-        { "command": "help", "description": "עזרה ושימוש" },
-        { "command": "version", "description": "הצגת גרסת הבוט" },
-        { "command": "changelog", "description": "הצגת שינויים אחרונים" },
-        { "command": "add", "description": "הוספת מספר מעקב" },
-        { "command": "myparcels", "description": "החבילות שלי" },
-        { "command": "settings", "description": "פתיחת ההגדרות" },
-        { "command": "language", "description": "שינוי שפה" }
+        {
+          "command": "start",
+          "description": "פתיחת התפריט הראשי"
+        },
+        {
+          "command": "help",
+          "description": "עזרה ושימוש"
+        },
+        {
+          "command": "version",
+          "description": "הצגת גרסת הבוט"
+        },
+        {
+          "command": "changelog",
+          "description": "הצגת שינויים אחרונים"
+        },
+        {
+          "command": "add",
+          "description": "הוספת מספר מעקב"
+        },
+        {
+          "command": "myparcels",
+          "description": "החבילות שלי"
+        },
+        {
+          "command": "settings",
+          "description": "פתיחת ההגדרות"
+        },
+        {
+          "command": "language",
+          "description": "שינוי שפה"
+        }
       ],
-      "scope": { "type": "all_private_chats" }
+      "scope": {
+        "type": "all_private_chats"
+      }
+    },
+    {
+      "commands": [
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        },
+        {
+          "command": "admin",
+          "description": "Open the admin dashboard"
+        },
+        {
+          "command": "stats",
+          "description": "Show bot statistics"
+        },
+        {
+          "command": "users",
+          "description": "Manage bot users"
+        },
+        {
+          "command": "parcels",
+          "description": "Manage tracked parcels"
+        }
+      ],
+      "scope": {
+        "type": "chat",
+        "chat_id": 123456789
+      }
+    },
+    {
+      "language_code": "en",
+      "commands": [
+        {
+          "command": "start",
+          "description": "Open the main menu"
+        },
+        {
+          "command": "help",
+          "description": "Show help and usage tips"
+        },
+        {
+          "command": "version",
+          "description": "Show the bot version"
+        },
+        {
+          "command": "changelog",
+          "description": "Show recent release notes"
+        },
+        {
+          "command": "add",
+          "description": "Add a new tracking number"
+        },
+        {
+          "command": "myparcels",
+          "description": "Show your tracked parcels"
+        },
+        {
+          "command": "settings",
+          "description": "Open settings"
+        },
+        {
+          "command": "language",
+          "description": "Change language"
+        },
+        {
+          "command": "admin",
+          "description": "Open the admin dashboard"
+        },
+        {
+          "command": "stats",
+          "description": "Show bot statistics"
+        },
+        {
+          "command": "users",
+          "description": "Manage bot users"
+        },
+        {
+          "command": "parcels",
+          "description": "Manage tracked parcels"
+        }
+      ],
+      "scope": {
+        "type": "chat",
+        "chat_id": 123456789
+      }
+    },
+    {
+      "language_code": "he",
+      "commands": [
+        {
+          "command": "start",
+          "description": "פתיחת התפריט הראשי"
+        },
+        {
+          "command": "help",
+          "description": "עזרה ושימוש"
+        },
+        {
+          "command": "version",
+          "description": "הצגת גרסת הבוט"
+        },
+        {
+          "command": "changelog",
+          "description": "הצגת שינויים אחרונים"
+        },
+        {
+          "command": "add",
+          "description": "הוספת מספר מעקב"
+        },
+        {
+          "command": "myparcels",
+          "description": "החבילות שלי"
+        },
+        {
+          "command": "settings",
+          "description": "פתיחת ההגדרות"
+        },
+        {
+          "command": "language",
+          "description": "שינוי שפה"
+        },
+        {
+          "command": "admin",
+          "description": "פתיחת לוח הניהול"
+        },
+        {
+          "command": "stats",
+          "description": "סטטיסטיקות הבוט"
+        },
+        {
+          "command": "users",
+          "description": "ניהול משתמשים"
+        },
+        {
+          "command": "parcels",
+          "description": "ניהול חבילות"
+        }
+      ],
+      "scope": {
+        "type": "chat",
+        "chat_id": 123456789
+      }
     }
   ],
   "menu_button": {

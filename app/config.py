@@ -11,10 +11,17 @@ def _get_int(name: str, default: int) -> int:
     return int(value)
 
 
+def _get_admin_user_ids() -> tuple[int, ...]:
+    raw = os.getenv("ADMIN_USER_IDS", "").strip() or os.getenv("ADMIN_CHAT_ID", "").strip()
+    if not raw:
+        raise RuntimeError("ADMIN_USER_IDS is required")
+    return tuple(dict.fromkeys(int(value.strip()) for value in raw.split(",") if value.strip()))
+
+
 @dataclass(slots=True)
 class Settings:
     telegram_bot_token: str
-    admin_chat_id: int
+    admin_user_ids: tuple[int, ...]
     database_path: str = "/app/data/bot.db"
     bot_metadata_file_path: str = "/app/config/bot_metadata.json"
     refresh_interval_minutes: int = 45
@@ -29,14 +36,11 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-        admin_chat_id = os.getenv("ADMIN_CHAT_ID", "").strip()
         if not token:
             raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
-        if not admin_chat_id:
-            raise RuntimeError("ADMIN_CHAT_ID is required")
         return cls(
             telegram_bot_token=token,
-            admin_chat_id=int(admin_chat_id),
+            admin_user_ids=_get_admin_user_ids(),
             database_path=os.getenv("DATABASE_PATH", "/app/data/bot.db"),
             bot_metadata_file_path=os.getenv("BOT_METADATA_FILE_PATH", "/app/config/bot_metadata.json"),
             refresh_interval_minutes=_get_int("REFRESH_INTERVAL_MINUTES", 45),
@@ -48,3 +52,6 @@ class Settings:
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             page_size=_get_int("PAGE_SIZE", 5),
         )
+
+    def is_admin(self, user_id: int) -> bool:
+        return user_id in self.admin_user_ids

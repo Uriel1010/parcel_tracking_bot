@@ -6,6 +6,18 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-09
+
+### Added
+- Private inline admin dashboard with user, parcel, error, scheduler, messaging, broadcast, and audit controls.
+- User blocking and safe two-step user-data deletion.
+- Admin-only Telegram command scope for configured administrator ID `123456789`.
+
+### Changed
+- Admin configuration now supports `ADMIN_USER_IDS`, with `ADMIN_CHAT_ID` retained as a compatibility fallback.
+- Blocked users are excluded from bot interaction, notifications, and broadcasts.
+
+
 ## [0.4.3] - 2026-05-19
 
 ### Fixed

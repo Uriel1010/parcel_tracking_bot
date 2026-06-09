@@ -79,19 +79,19 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 
 ## Admin commands
 
-Admin access is restricted to `ADMIN_CHAT_ID`.
+Admin access is restricted to `ADMIN_USER_IDS` (configured as `123456789`).
 
 - `/admin`
 - `/stats`
 - `/users`
 - `/parcels`
 
-The admin dashboard shows totals, active counts, delivered/archived counts, top users by parcel count, and recent tracker/job errors when present.
+The private inline dashboard supports paginated user and parcel management, tracking-error review, scheduler health/manual runs, direct user messages, confirmed broadcasts, user blocking, two-step user-data deletion, parcel operations, and an audit log. Admin commands are registered only for chat `123456789`.
 
 ## Environment variables
 
 - `TELEGRAM_BOT_TOKEN`
-- `ADMIN_CHAT_ID`
+- `ADMIN_USER_IDS` (comma-separated; `ADMIN_CHAT_ID` is a compatibility fallback)
 - `DATABASE_PATH`
 - `BOT_METADATA_FILE_PATH`
 - `REFRESH_INTERVAL_MINUTES`

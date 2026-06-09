@@ -11,7 +11,9 @@ class ParcelActionCallback(CallbackData, prefix="parcel"):
 
 class AdminActionCallback(CallbackData, prefix="admin"):
     action: str
+    target_id: int = 0
     page: int = 0
+    value: str = ""
 
 
 class SettingsActionCallback(CallbackData, prefix="settings"):

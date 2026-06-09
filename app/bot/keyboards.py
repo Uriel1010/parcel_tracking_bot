@@ -124,3 +124,86 @@ def language_keyboard(locale: str) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text=t(locale, "nav.back"), callback_data="settings:main")],
         ]
     )
+
+
+def admin_dashboard_keyboard(locale: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t(locale, "admin.stats"), callback_data=AdminActionCallback(action="overview").pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.users"), callback_data=AdminActionCallback(action="users").pack()), InlineKeyboardButton(text=t(locale, "admin.parcels"), callback_data=AdminActionCallback(action="parcels").pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.errors"), callback_data=AdminActionCallback(action="parcels", value="errors").pack()), InlineKeyboardButton(text=t(locale, "admin.jobs"), callback_data=AdminActionCallback(action="jobs").pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.broadcast"), callback_data=AdminActionCallback(action="broadcast").pack()), InlineKeyboardButton(text=t(locale, "admin.audit"), callback_data=AdminActionCallback(action="audit").pack())],
+    ])
+
+
+def admin_users_keyboard(users: list[dict], page: int, has_next: bool, locale: str) -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=f"{'BLOCKED ' if row['is_blocked'] else ''}{row['telegram_user_id']} @{row['username'] or '-'}", callback_data=AdminActionCallback(action="user", target_id=row["telegram_user_id"], page=page).pack())] for row in users]
+    rows.append([InlineKeyboardButton(text=t(locale, "admin.search"), callback_data=AdminActionCallback(action="user_search").pack())])
+    nav = []
+    if page > 0: nav.append(InlineKeyboardButton(text=t(locale, "btn.prev"), callback_data=AdminActionCallback(action="users", page=page - 1).pack()))
+    if has_next: nav.append(InlineKeyboardButton(text=t(locale, "btn.next"), callback_data=AdminActionCallback(action="users", page=page + 1).pack()))
+    if nav: rows.append(nav)
+    rows.append([InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="home").pack())])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_user_keyboard(user: dict, locale: str) -> InlineKeyboardMarkup:
+    target = int(user["telegram_user_id"])
+    block_action = "user_unblock" if user["is_blocked"] else "user_block"
+    block_label = t(locale, "admin.unblock") if user["is_blocked"] else t(locale, "admin.block")
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t(locale, "admin.message"), callback_data=AdminActionCallback(action="user_message", target_id=target).pack()), InlineKeyboardButton(text=t(locale, "admin.user_parcels"), callback_data=AdminActionCallback(action="parcels", target_id=target).pack())],
+        [InlineKeyboardButton(text=block_label, callback_data=AdminActionCallback(action=block_action, target_id=target).pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.delete_user"), callback_data=AdminActionCallback(action="user_delete", target_id=target).pack())],
+        [InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="users").pack())],
+    ])
+
+
+def admin_parcels_keyboard(parcels: list[dict], page: int, has_next: bool, locale: str, value: str = "all") -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(text=f"{row['tracking_number']} | {row['current_status']}", callback_data=AdminActionCallback(action="parcel", target_id=row["id"], page=page, value=value).pack())] for row in parcels]
+    rows.append([InlineKeyboardButton(text=t(locale, "admin.search"), callback_data=AdminActionCallback(action="parcel_search").pack())])
+    rows.append([
+        InlineKeyboardButton(text=t(locale, "admin.active"), callback_data=AdminActionCallback(action="parcels", value="active").pack()),
+        InlineKeyboardButton(text=t(locale, "admin.errors"), callback_data=AdminActionCallback(action="parcels", value="errors").pack()),
+        InlineKeyboardButton(text=t(locale, "admin.archived"), callback_data=AdminActionCallback(action="parcels", value="archived").pack()),
+    ])
+    nav = []
+    if page > 0: nav.append(InlineKeyboardButton(text=t(locale, "btn.prev"), callback_data=AdminActionCallback(action="parcels", page=page - 1, value=value).pack()))
+    if has_next: nav.append(InlineKeyboardButton(text=t(locale, "btn.next"), callback_data=AdminActionCallback(action="parcels", page=page + 1, value=value).pack()))
+    if nav: rows.append(nav)
+    rows.append([InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="home").pack())])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_parcel_keyboard(parcel: dict, locale: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t(locale, "btn.refresh"), callback_data=AdminActionCallback(action="parcel_refresh", target_id=parcel["id"]).pack()), InlineKeyboardButton(text=t(locale, "btn.unmute") if parcel["reminders_muted"] else t(locale, "btn.mute"), callback_data=AdminActionCallback(action="parcel_unmute" if parcel["reminders_muted"] else "parcel_mute", target_id=parcel["id"]).pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.unarchive") if parcel["archived"] else t(locale, "admin.archive"), callback_data=AdminActionCallback(action="parcel_unarchive" if parcel["archived"] else "parcel_archive", target_id=parcel["id"]).pack()), InlineKeyboardButton(text=t(locale, "admin.clear_error"), callback_data=AdminActionCallback(action="parcel_clear_error", target_id=parcel["id"]).pack())],
+        [InlineKeyboardButton(text=t(locale, "btn.delete"), callback_data=AdminActionCallback(action="parcel_delete", target_id=parcel["id"]).pack())],
+        [InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="parcels").pack())],
+    ])
+
+
+def admin_jobs_keyboard(locale: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t(locale, "admin.run_refresh"), callback_data=AdminActionCallback(action="job_confirm", value="refresh").pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.run_stale"), callback_data=AdminActionCallback(action="job_confirm", value="stale").pack())],
+        [InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="home").pack())],
+    ])
+
+
+def admin_confirm_keyboard(action: str, target_id: int, locale: str, value: str = "") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t(locale, "admin.confirm"), callback_data=AdminActionCallback(action=action, target_id=target_id, value=value).pack())],
+        [InlineKeyboardButton(text=t(locale, "admin.cancel"), callback_data=AdminActionCallback(action="home").pack())],
+    ])
+
+
+def admin_audit_keyboard(page: int, has_next: bool, locale: str) -> InlineKeyboardMarkup:
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton(text=t(locale, "btn.prev"), callback_data=AdminActionCallback(action="audit", page=page - 1).pack()))
+    if has_next:
+        nav.append(InlineKeyboardButton(text=t(locale, "btn.next"), callback_data=AdminActionCallback(action="audit", page=page + 1).pack()))
+    rows = [nav] if nav else []
+    rows.append([InlineKeyboardButton(text=t(locale, "nav.back"), callback_data=AdminActionCallback(action="home").pack())])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
