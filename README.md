@@ -21,6 +21,17 @@ Lightweight production-style Telegram bot for tracking parcels with a focus on:
 
 Users can add tracking numbers, list their parcels, view merged event history, refresh on demand, mute reminders, and delete or keep completed parcels. The bot periodically refreshes active parcels, notifies users when the newest status changes, and sends a reminder when no new events were seen for 14 days.
 
+## Public commands
+
+- `/start`
+- `/help`
+- `/version`
+- `/changelog`
+- `/add`
+- `/myparcels`
+- `/settings`
+- `/language`
+
 ## Telegram metadata sync
 
 - The bot loads Telegram-managed public metadata from [`bot_metadata.json`](bot_metadata.json) on startup.

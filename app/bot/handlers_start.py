@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from html import escape
+
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.filters.command import CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -13,6 +15,7 @@ from app.bot.keyboards import language_keyboard, parcel_actions_keyboard, settin
 from app.i18n import normalize_locale, t
 from app.services.parcel_service import ParcelService
 from app.services.parser_utils import requires_linked_phone_number
+from app.services.release_info import current_version, recent_changelog
 
 
 router = Router()
@@ -71,6 +74,22 @@ async def handle_start(message: Message, parcel_service: ParcelService) -> None:
 async def handle_help(message: Message, parcel_service: ParcelService) -> None:
     locale = await _user_locale(message, parcel_service)
     await message.answer(t(locale, "help.long"))
+
+
+@router.message(Command("version"))
+async def handle_version(message: Message, parcel_service: ParcelService) -> None:
+    locale = await _user_locale(message, parcel_service)
+    await message.answer(t(locale, "version.text", version=current_version()))
+
+
+@router.message(Command("changelog"))
+async def handle_changelog(message: Message, parcel_service: ParcelService) -> None:
+    locale = await _user_locale(message, parcel_service)
+    changelog = recent_changelog()
+    if not changelog:
+        await message.answer(t(locale, "changelog.empty"))
+        return
+    await message.answer(f"<b>{t(locale, 'changelog.title')}</b>\n\n{escape(changelog)}")
 
 
 @router.message(Command("settings"))
@@ -247,7 +266,7 @@ async def _finish_add_parcel(message: Message, state: FSMContext, parcel_service
     )
 
 
-@router.message(F.text.regexp(r"^[A-Za-z0-9\- ]{8,40}$"))
+@router.message(StateFilter(None), F.text.regexp(r"^[A-Za-z0-9\- ]{8,40}$"))
 async def handle_freeform_tracking(message: Message, state: FSMContext, parcel_service: ParcelService) -> None:
     locale = await _user_locale(message, parcel_service)
     if requires_linked_phone_number(message.text or ""):

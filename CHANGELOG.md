@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-05-19
+
+### Fixed
+- Rename and linked-phone edit flows now keep freeform tracking-number detection disabled while a user is already in an active input state.
+
+## [0.4.2] - 2026-05-19
+
+### Added
+- `/version` command for showing the running bot version.
+- `/changelog` command for showing recent release notes from `CHANGELOG.md`.
+
 ## [0.4.1] - 2026-05-19
 
 ### Fixed

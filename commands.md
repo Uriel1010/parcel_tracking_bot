@@ -7,6 +7,8 @@ Paste this block into BotFather `Edit Commands`:
 ```text
 start - Open the main menu
 help - Show help and usage tips
+version - Show the bot version
+changelog - Show recent release notes
 add - Add a new tracking number
 myparcels - Show your tracked parcels
 settings - Open settings
