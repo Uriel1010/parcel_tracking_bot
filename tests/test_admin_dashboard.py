@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 
+from app.bot.callbacks import AdminActionCallback
+from app.bot.keyboards import admin_dashboard_keyboard
 from app.config import Settings
 from app.db import Database
 from app.utils.time import utcnow
@@ -52,3 +54,23 @@ def test_bot_metadata_registers_admin_commands_only_for_admin_chat() -> None:
     assert len(chat_sets) == 3
     assert {item.scope.chat_id for item in chat_sets} == {123456789}
     assert all(any(command.command == "admin" for command in item.commands) for item in chat_sets)
+
+
+def test_admin_dashboard_callbacks_round_trip() -> None:
+    keyboard = admin_dashboard_keyboard("en")
+    actions = []
+
+    for row in keyboard.inline_keyboard:
+        for button in row:
+            callback = AdminActionCallback.unpack(button.callback_data)
+            actions.append((callback.action, callback.value))
+
+    assert actions == [
+        ("overview", None),
+        ("users", None),
+        ("parcels", None),
+        ("parcels", "errors"),
+        ("jobs", None),
+        ("broadcast", None),
+        ("audit", None),
+    ]

@@ -13,9 +13,9 @@ class AdminActionCallback(CallbackData, prefix="admin"):
     action: str
     target_id: int = 0
     page: int = 0
-    value: str = ""
+    value: str | None = None
 
 
 class SettingsActionCallback(CallbackData, prefix="settings"):
     action: str
-    value: str = ""
+    value: str | None = None

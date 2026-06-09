@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-09
+
+### Fixed
+- Admin and settings inline callbacks without an optional value are now decoded correctly instead of being silently ignored.
+
 ## [0.5.0] - 2026-06-09
 
 ### Added
