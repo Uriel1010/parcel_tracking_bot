@@ -8,7 +8,7 @@ services:
       - .env
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-123456789}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
       ADMIN_CHAT_ID: ${ADMIN_CHAT_ID:-}
       DATABASE_PATH: ${DATABASE_PATH:-/app/data/bot.db}
       BOT_METADATA_FILE_PATH: ${BOT_METADATA_FILE_PATH:-/app/config/bot_metadata.json}

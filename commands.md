@@ -17,7 +17,7 @@ language - Change language
 
 ## Admin Commands
 
-These commands are registered only for admin chat `123456789`:
+These commands are registered only for the private chats listed in `ADMIN_USER_IDS`:
 
 ```text
 admin - Open the admin dashboard

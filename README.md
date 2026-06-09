@@ -79,14 +79,14 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 
 ## Admin commands
 
-Admin access is restricted to `ADMIN_USER_IDS` (configured as `123456789`).
+Admin access is restricted to the Telegram user IDs configured in `ADMIN_USER_IDS`.
 
 - `/admin`
 - `/stats`
 - `/users`
 - `/parcels`
 
-The private inline dashboard supports paginated user and parcel management, tracking-error review, scheduler health/manual runs, direct user messages, confirmed broadcasts, user blocking, two-step user-data deletion, parcel operations, and an audit log. Admin commands are registered only for chat `123456789`.
+The private inline dashboard supports paginated user and parcel management, tracking-error review, scheduler health/manual runs, direct user messages, confirmed broadcasts, user blocking, two-step user-data deletion, parcel operations, and an audit log. Admin commands are registered only for the private chats listed in `ADMIN_USER_IDS`.
 
 ## Environment variables
 

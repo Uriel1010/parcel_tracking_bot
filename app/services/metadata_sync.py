@@ -81,7 +81,7 @@ def _normalize_localized_values(raw: Any, field_name: str) -> tuple[LocalizedVal
     return tuple(values)
 
 
-def _parse_commands(raw_commands: Any) -> tuple[CommandSet, ...]:
+def _parse_commands(raw_commands: Any, admin_user_ids: tuple[int, ...] = ()) -> tuple[CommandSet, ...]:
     if raw_commands is None:
         return ()
     if not isinstance(raw_commands, list):
@@ -100,8 +100,15 @@ def _parse_commands(raw_commands: Any) -> tuple[CommandSet, ...]:
         if not isinstance(item, dict):
             raise ValueError(f"commands entry #{index} must be an object")
         commands = tuple(_parse_command_list(item.get("commands"), f"commands[{index}].commands"))
-        scope = _parse_scope(item.get("scope"))
+        raw_scope = item.get("scope")
         language_code = str(item["language_code"]).strip() if item.get("language_code") else None
+        if isinstance(raw_scope, dict) and raw_scope.get("type") == "admin_users":
+            command_sets.extend(
+                CommandSet(commands=commands, scope=BotCommandScopeChat(chat_id=user_id), language_code=language_code)
+                for user_id in admin_user_ids
+            )
+            continue
+        scope = _parse_scope(raw_scope)
         command_sets.append(CommandSet(commands=commands, scope=scope, language_code=language_code))
     return tuple(command_sets)
 
@@ -154,7 +161,7 @@ def _parse_menu_button(raw_menu_button: Any) -> Any:
     raise ValueError(f"Unsupported menu_button type: {button_type}")
 
 
-def load_bot_metadata_config(path: str) -> BotMetadataConfig:
+def load_bot_metadata_config(path: str, admin_user_ids: tuple[int, ...] = ()) -> BotMetadataConfig:
     config_path = Path(path)
     LOGGER.info("metadata_loaded", extra={"extra_data": {"path": str(config_path)}})
     raw_data = json.loads(config_path.read_text(encoding="utf-8"))
@@ -165,7 +172,7 @@ def load_bot_metadata_config(path: str) -> BotMetadataConfig:
         name=_normalize_localized_values(raw_data.get("name"), "name"),
         description=_normalize_localized_values(raw_data.get("description"), "description"),
         short_description=_normalize_localized_values(raw_data.get("short_description"), "short_description"),
-        commands=_parse_commands(raw_data.get("commands")),
+        commands=_parse_commands(raw_data.get("commands"), admin_user_ids),
         menu_button=_parse_menu_button(raw_data.get("menu_button")),
     )
 
@@ -353,9 +360,14 @@ async def _sync_menu_button(bot: Bot, menu_button: Any, retries: int) -> None:
         return
 
 
-async def initialize_bot_metadata(bot: Bot, metadata_file_path: str, retries: int = 2) -> None:
+async def initialize_bot_metadata(
+    bot: Bot,
+    metadata_file_path: str,
+    retries: int = 2,
+    admin_user_ids: tuple[int, ...] = (),
+) -> None:
     try:
-        config = load_bot_metadata_config(metadata_file_path)
+        config = load_bot_metadata_config(metadata_file_path, admin_user_ids)
     except FileNotFoundError:
         LOGGER.warning("metadata_file_missing", extra={"extra_data": {"path": metadata_file_path}})
         return

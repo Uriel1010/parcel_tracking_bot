@@ -30,7 +30,12 @@ async def main() -> None:
     await db.initialize()
 
     bot = Bot(token=settings.telegram_bot_token, default=DefaultBotProperties(parse_mode="HTML"))
-    await initialize_bot_metadata(bot, settings.bot_metadata_file_path, retries=settings.http_retry_count)
+    await initialize_bot_metadata(
+        bot,
+        settings.bot_metadata_file_path,
+        retries=settings.http_retry_count,
+        admin_user_ids=settings.admin_user_ids,
+    )
     dp = Dispatcher()
     parcel_service = ParcelService(db, settings)
     notification_service = NotificationService(db, bot, settings.stale_reminder_cooldown_days)

@@ -8,7 +8,8 @@ services:
       - .env
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      ADMIN_CHAT_ID: ${ADMIN_CHAT_ID}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+      ADMIN_CHAT_ID: ${ADMIN_CHAT_ID:-}
       DATABASE_PATH: ${DATABASE_PATH:-/app/data/bot.db}
       BOT_METADATA_FILE_PATH: ${BOT_METADATA_FILE_PATH:-/app/config/bot_metadata.json}
       REFRESH_INTERVAL_MINUTES: ${REFRESH_INTERVAL_MINUTES:-45}

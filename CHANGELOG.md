@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-09
+
+### Fixed
+- Removed the real administrator Telegram ID from tracked examples, documentation, metadata, Compose defaults, and tests.
+- Admin-only command scopes are now generated at runtime from `ADMIN_USER_IDS`, including multi-admin configurations.
+
 ## [0.5.1] - 2026-06-09
 
 ### Fixed
@@ -16,7 +22,7 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 ### Added
 - Private inline admin dashboard with user, parcel, error, scheduler, messaging, broadcast, and audit controls.
 - User blocking and safe two-step user-data deletion.
-- Admin-only Telegram command scope for configured administrator ID `123456789`.
+- Admin-only Telegram command scope for configured administrator IDs.
 
 ### Changed
 - Admin configuration now supports `ADMIN_USER_IDS`, with `ADMIN_CHAT_ID` retained as a compatibility fallback.

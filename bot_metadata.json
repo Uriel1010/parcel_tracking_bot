@@ -308,8 +308,7 @@
         }
       ],
       "scope": {
-        "type": "chat",
-        "chat_id": 123456789
+        "type": "admin_users"
       }
     },
     {
@@ -365,8 +364,7 @@
         }
       ],
       "scope": {
-        "type": "chat",
-        "chat_id": 123456789
+        "type": "admin_users"
       }
     },
     {
@@ -422,8 +420,7 @@
         }
       ],
       "scope": {
-        "type": "chat",
-        "chat_id": 123456789
+        "type": "admin_users"
       }
     }
   ],
