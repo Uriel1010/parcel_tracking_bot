@@ -16,6 +16,7 @@ from app.services.parser_utils import (
     clean_tracking_number,
     event_fingerprint,
     is_aliexpress_standard_tracking_number,
+    is_bar2go_tracking_number,
     is_epost_tracking_number,
     is_gaash_tracking_number,
     is_hfd_tracking_number,
@@ -26,6 +27,7 @@ from app.services.parser_utils import (
     snapshot_fingerprint,
     tracking_phone_service_key,
 )
+from app.trackers.bar2go import Bar2GoTracker
 from app.trackers.cainiao import CainiaoTracker
 from app.trackers.epost import EpostTracker
 from app.trackers.exelot import ExelotTracker
@@ -47,6 +49,7 @@ class ParcelService:
         self.db = db
         self.settings = settings
         self.client = httpx.AsyncClient(timeout=settings.request_timeout_seconds, follow_redirects=True)
+        self.bar2go = Bar2GoTracker(self.client)
         self.cainiao = CainiaoTracker(self.client)
         self.exelot = ExelotTracker(self.client)
         self.epost = EpostTracker(self.client)
@@ -205,6 +208,9 @@ class ParcelService:
             return await self.gaash.track(tracking_number)
         cainiao_snapshot = await self.cainiao.track(tracking_number)
         snapshots = [cainiao_snapshot]
+        is_bar2go_number = is_bar2go_tracking_number(tracking_number)
+        if is_bar2go_number:
+            snapshots.append(await self.bar2go.track(tracking_number))
         if is_aliexpress_standard_tracking_number(tracking_number):
             snapshots.append(await self.track_global.track(tracking_number))
         if EXELOT_PATTERN.match(tracking_number):
@@ -214,7 +220,7 @@ class ParcelService:
             tracking_number.endswith("IL")
             or cainiao_snapshot.events
             or tracking_number.startswith(("LP", "SY", "UT", "CNG", "EE", "RR"))
-            or bool(UNIVERSAL_POSTAL_PATTERN.match(tracking_number))
+            or (bool(UNIVERSAL_POSTAL_PATTERN.match(tracking_number)) and not is_bar2go_number)
         )
         if should_try_israel_post:
             israel_post_snapshot = await self.israel_post.track(tracking_number)

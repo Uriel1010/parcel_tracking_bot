@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project uses a simple semantic
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-08
+
+### Added
+- Bar2Go tracking fallback for `BR#########MG` shipments, including empty-result handling for currently unavailable Bar2Go endpoints.
+
 ## [0.5.2] - 2026-06-09
 
 ### Fixed

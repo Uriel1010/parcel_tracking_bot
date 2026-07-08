@@ -59,16 +59,17 @@ Users can add tracking numbers, list their parcels, view merged event history, r
 3. It queries Exelot for Exelot-style tracking numbers such as `XLT...`.
 4. It then tries Israel Post for local delivery enrichment or direct Israel Post numbers.
 5. HFD shipments that start with `HD` and ePost shipments such as `ECSA...` ask for the linked phone number and use HFD's public tracking flow.
-6. GAASH Worldwide shipments such as `GAIH...` use GAASH's public parcel-status flow.
-7. Events are normalized into one internal schema:
+6. Bar2Go shipments such as `BR005681854MG` are checked through the Bar2Go fallback.
+7. GAASH Worldwide shipments such as `GAIH...` use GAASH's public parcel-status flow.
+8. Events are normalized into one internal schema:
    - `timestamp`
    - `status_code`
    - `status_text`
    - `location`
    - `source`
    - `raw_payload`
-8. The merged event stream is deduplicated and sorted chronologically.
-9. The newest normalized event becomes the current derived status.
+9. The merged event stream is deduplicated and sorted chronologically.
+10. The newest normalized event becomes the current derived status.
 
 ## Stale reminders
 

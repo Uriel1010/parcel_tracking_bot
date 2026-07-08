@@ -42,6 +42,7 @@ HFD_PATTERN = re.compile(r"^HD\d{6,20}$")
 EPOST_PATTERN = re.compile(r"^ECSA\d{4,20}$")
 ALIEXPRESS_STANDARD_PATTERN = re.compile(r"^MB\d{10}Y$")
 GAASH_PATTERN = re.compile(r"^GAIH\d{6,20}$")
+BAR2GO_PATTERN = re.compile(r"^BR\d{9}MG$")
 
 
 def clean_tracking_number(value: str) -> str:
@@ -75,6 +76,10 @@ def is_aliexpress_standard_tracking_number(value: str) -> bool:
 
 def is_gaash_tracking_number(value: str) -> bool:
     return bool(GAASH_PATTERN.match(clean_tracking_number(value)))
+
+
+def is_bar2go_tracking_number(value: str) -> bool:
+    return bool(BAR2GO_PATTERN.match(clean_tracking_number(value)))
 
 
 def requires_linked_phone_number(value: str) -> bool:
